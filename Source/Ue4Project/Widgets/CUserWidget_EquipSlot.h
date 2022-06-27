@@ -37,7 +37,7 @@ protected:
 
 
 public:
-	void Update(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData, bool bInitEquip);
+	void Update(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData);
 	void DeleteItem();
 
 private:

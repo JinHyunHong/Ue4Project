@@ -47,13 +47,13 @@ public:
 
 public:
 	UFUNCTION(BlueprintCallable)
-		void AddItem(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData);
+		void AddItem(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData, bool bPickUp = false);
 	
 	UFUNCTION(BlueprintCallable)
-		void AddEquip(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData, bool bInitEquip = false);
+		void AddEquip(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData);
 
 private:
-	void OnEquipState(const EEquipmentType& InEquipType, const FItem& InItemData); // EquipState에 장비 장착
+	void OnEquipState(const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData); // EquipState에 장비 장착
 	void OnUnequipState(const EEquipmentType& InEquipType); // EquipState에 장비 해제
 
 private:
@@ -72,5 +72,4 @@ private:
 
 private:
 	class ACEquipCharacter* EquipState;
-	class AActor* StateWeapon;
 };

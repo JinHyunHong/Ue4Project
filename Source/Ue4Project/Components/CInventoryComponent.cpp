@@ -3,7 +3,7 @@
 #include "GameFramework/Character.h"
 #include "Characters/CEquipCharacter.h"
 #include "Characters/CPlayer.h"
-#include "Actors/CAttachment.h"
+#include "Actions/CAttachment.h"
 #include "Widgets/CUserWidget_EquipInventory.h"
 #include "Widgets/CUserWidget_Equipment.h"
 #include "Widgets/CUserWidget_Inventory.h"
@@ -63,42 +63,25 @@ void UCInventoryComponent::ViewAll()
 	SetViewList(EViewListType::AllView);
 }
 
-void UCInventoryComponent::AddItem(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData)
+void UCInventoryComponent::AddItem(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData, bool bPickUp)
 {
 	CheckNull(Inventory);
 	Inventory->AddItem(InCharacterType, InEquipType, InItemName, InItemData);
 
-	OnUnequipState(InEquipType);
+	if (bPickUp == false) OnUnequipState(InEquipType);
 }
 
-void UCInventoryComponent::AddEquip(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData, bool bInitEquip)
+void UCInventoryComponent::AddEquip(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData)
 {
 	CheckNull(Equipment);
-	Equipment->AddEquip(InCharacterType, InEquipType, InItemName, InItemData, bInitEquip);
+	Equipment->AddEquip(InCharacterType, InEquipType, InItemName, InItemData);
 
-	OnEquipState(InEquipType, InItemData);
+	OnEquipState(InEquipType, InItemName, InItemData);
 }
 
-void UCInventoryComponent::OnEquipState(const EEquipmentType& InEquipType, const FItem& InItemData)
+void UCInventoryComponent::OnEquipState(const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData)
 {
 	CheckNull(EquipState);
-	
-	if (InEquipType == EEquipmentType::Weapon)
-	{
-		FTransform transform;
-		TSubclassOf<ACAttachment> attachmentClass = InItemData.AttachmentClass;
-		CheckNull(attachmentClass);
-	
-		StateWeapon = Cast<AActor>(EquipState->GetWorld()->SpawnActorDeferred<ACAttachment>(attachmentClass, transform, EquipState));
-		CheckNull(StateWeapon);
-	
-		StateWeapon->SetActorLabel(EquipState->GetActorLabel() + "_" + StateWeapon->GetActorLabel());
-	
-		UGameplayStatics::FinishSpawningActor(StateWeapon, transform);
-	
-		return;
-	}
-
 	CheckNull(InItemData.Mesh);
 	USkeletalMeshComponent* mesh = EquipState->GetEquipMesh(InEquipType);
 	CheckNull(mesh);
@@ -108,14 +91,6 @@ void UCInventoryComponent::OnEquipState(const EEquipmentType& InEquipType, const
 void UCInventoryComponent::OnUnequipState(const EEquipmentType& InEquipType)
 {
 	CheckNull(EquipState);
-
-	if (InEquipType == EEquipmentType::Weapon)
-	{
-		StateWeapon->Destroy();
-
-		return;
-	}
-
 	USkeletalMeshComponent* mesh = EquipState->GetEquipMesh(InEquipType);
 	CheckNull(mesh);
 	mesh->SetSkeletalMesh(NULL);
@@ -133,7 +108,6 @@ void UCInventoryComponent::SetViewList(const EViewListType& InType)
 		{
 			Equipment->SetVisibility(ESlateVisibility::Hidden);
 			Inventory->SetVisibility(ESlateVisibility::Hidden);
-			UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
 			owner->GetController<APlayerController>()->bShowMouseCursor = false;
 			owner->GetController<APlayerController>()->SetInputMode(FInputModeGameOnly());
 
@@ -149,13 +123,11 @@ void UCInventoryComponent::SetViewList(const EViewListType& InType)
 
 			if (bDilation)
 			{
-				UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.05f);
 				owner->GetController<APlayerController>()->bShowMouseCursor = true;
 				owner->GetController<APlayerController>()->SetInputMode(FInputModeGameAndUI());
 				break;
 			}
 			
-			UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
 			owner->GetController<APlayerController>()->bShowMouseCursor = false;
 			owner->GetController<APlayerController>()->SetInputMode(FInputModeGameOnly());
 			break;
@@ -170,13 +142,11 @@ void UCInventoryComponent::SetViewList(const EViewListType& InType)
 
 			if (bDilation)
 			{
-				UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.05f);
 				owner->GetController<APlayerController>()->bShowMouseCursor = true;
 				owner->GetController<APlayerController>()->SetInputMode(FInputModeGameAndUI());
 				break;
 			}
 
-			UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
 			owner->GetController<APlayerController>()->bShowMouseCursor = false;
 			owner->GetController<APlayerController>()->SetInputMode(FInputModeGameOnly());
 			break;
@@ -185,7 +155,6 @@ void UCInventoryComponent::SetViewList(const EViewListType& InType)
 		{
 			Equipment->SetVisibility(ESlateVisibility::Visible);
 			Inventory->SetVisibility(ESlateVisibility::Visible);
-			UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.05f);				
 			owner->GetController<APlayerController>()->bShowMouseCursor = true;
 			owner->GetController<APlayerController>()->SetInputMode(FInputModeGameAndUI());
 

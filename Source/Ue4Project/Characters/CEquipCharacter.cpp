@@ -1,7 +1,12 @@
 #include "CEquipCharacter.h"
 #include "Global.h"
 #include "Kismet/DataTableFunctionLibrary.h"
+#include "Engine/SkeletalMeshSocket.h"
 #include "Components/CEquipComponent.h"
+#include "Components/CActionComponent.h"
+#include "Components/CStateComponent.h"
+#include "Components/CStatusComponent.h"
+#include "Components/CMontagesComponent.h"
 
 ACEquipCharacter::ACEquipCharacter()
 {
@@ -23,9 +28,13 @@ ACEquipCharacter::ACEquipCharacter()
 	CHelpers::CreateComponent<USkeletalMeshComponent>(this, &EqBoots, "EqBoots", GetMesh());
 	CHelpers::CreateComponent<USkeletalMeshComponent>(this, &EqLeftBracer, "EqLeftBracer", GetMesh());
 	CHelpers::CreateComponent<USkeletalMeshComponent>(this, &EqRightBracer, "EqRightBracer", GetMesh());
-
+	CHelpers::CreateComponent<USkeletalMeshComponent>(this, &EqWeapon, "EqWeapon", GetMesh());
 
 	CHelpers::CreateActorComponent<UCEquipComponent>(this, &Equip, "Equip");
+	CHelpers::CreateActorComponent<UCActionComponent>(this, &Action, "Action");
+	CHelpers::CreateActorComponent<UCStateComponent>(this, &State, "State");
+	CHelpers::CreateActorComponent<UCStatusComponent>(this, &Status, "Status");
+	CHelpers::CreateActorComponent<UCMontagesComponent>(this, &Montages, "Montages");
 
 	// Bodies
 	BodyChest->ComponentTags.Add("Body");
@@ -45,6 +54,7 @@ ACEquipCharacter::ACEquipCharacter()
 	Equips.Add(EEquipmentType::Gloves, EqGloves);
 	Equips.Add(EEquipmentType::Robes, EqRobe);
 	Equips.Add(EEquipmentType::Shoulders, EqShoulders);
+	Equips.Add(EEquipmentType::Weapon, EqWeapon);
 
 	// SetClothingSimulationFactory
 	FString path = "Class'/Script/ClothingSystemRuntimeNv.ClothingSimulationFactoryNv'";
@@ -74,6 +84,18 @@ ACEquipCharacter::ACEquipCharacter()
 
 	GetMesh()->SetRelativeLocation(FVector(0, 0, -90));
 	GetMesh()->SetRelativeRotation(FRotator(0, -90, 0));
+
+
+	// EqWeapon Set Socket
+	USkeletalMesh* mesh;
+	CHelpers::GetAsset<USkeletalMesh>(&mesh, "SkeletalMesh'/Game/Characters/Meshes/UCCS_Male/SK_UCCS_Male.SK_UCCS_Male'");
+	GetMesh()->SetSkeletalMesh(mesh);
+	EqWeapon->SetupAttachment(GetMesh(), "Hand_Sword");
+}
+
+void ACEquipCharacter::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
 }
 
 void ACEquipCharacter::BeginPlay()
@@ -85,9 +107,7 @@ void ACEquipCharacter::BeginPlay()
 		body->SetMasterPoseComponent(GetMesh(), true);
 
 	for (TPair<EEquipmentType, USkeletalMeshComponent*> equip : Equips)
-	{
 		equip.Value->SetMasterPoseComponent(GetMesh(), true);
-	}
 
 	// Head
 	Bodies.Add(GetMesh());
@@ -120,10 +140,6 @@ void ACEquipCharacter::SetCharacter(const ECharacter& InType)
 	CharacterInfo = *result;
 	
 	UpdateMesh();
-}
-
-void ACEquipCharacter::SetMasterPose()
-{
 }
 
 void ACEquipCharacter::UpdateMesh()

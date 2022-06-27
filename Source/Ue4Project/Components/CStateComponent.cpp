@@ -1,12 +1,9 @@
-
 #include "CStateComponent.h"
+#include "Global.h"
 
 UCStateComponent::UCStateComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
-
 }
-
 
 void UCStateComponent::BeginPlay()
 {
@@ -14,10 +11,52 @@ void UCStateComponent::BeginPlay()
 
 }
 
-
-void UCStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UCStateComponent::SetIdleMode()
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
+	ChangeType(EStateType::Idle);
 }
 
+void UCStateComponent::SetRollMode()
+{
+	ChangeType(EStateType::Roll);
+}
+
+void UCStateComponent::SetBackstepMode()
+{
+	ChangeType(EStateType::Backstep);
+}
+
+void UCStateComponent::SetEquipMode()
+{
+	ChangeType(EStateType::Equip);
+}
+
+void UCStateComponent::SetActionMode()
+{
+	ChangeType(EStateType::Action);
+}
+
+void UCStateComponent::SetHittedMode()
+{
+	ChangeType(EStateType::Hitted);
+}
+
+void UCStateComponent::SetDeadMode()
+{
+	ChangeType(EStateType::Dead);
+}
+
+void UCStateComponent::SetPickUpMode()
+{
+	ChangeType(EStateType::PickUp);
+}
+
+
+void UCStateComponent::ChangeType(EStateType InType)
+{
+	EStateType type = Type;
+	Type = InType;
+
+	if (OnStateTypeChanged.IsBound())
+		OnStateTypeChanged.Broadcast(type, InType);
+}

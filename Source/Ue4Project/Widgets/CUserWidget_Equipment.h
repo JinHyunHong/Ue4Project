@@ -28,7 +28,7 @@ protected:
 	void OnExitPress() override;
 
 public:
-	void AddEquip(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData, bool bInitEquip);
+	void AddEquip(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData);
 
 public:
 	FORCEINLINE class UCUserWidget_EquipSlot* GetSlot(const EEquipmentType& InEquipType) { return Datas[InEquipType]; }

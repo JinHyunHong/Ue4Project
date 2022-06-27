@@ -15,4 +15,6 @@ class UE4PROJECT_API IICharacter
 	GENERATED_BODY()
 
 public:
+	virtual void Begin_Dead() {};
+	virtual void End_Dead() {};
 };

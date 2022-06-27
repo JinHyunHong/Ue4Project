@@ -1,5 +1,6 @@
 #include "Widgets/CUserWidget_ItemSlot.h"
 #include "Global.h"
+#include "Characters/CPlayer.h"
 #include "Components/CEquipComponent.h"
 #include "Components/CInventoryComponent.h"
 #include "Widgets/CUserWidget_Equipment.h"
@@ -21,16 +22,16 @@ void UCUserWidget_ItemSlot::NativePreConstruct()
 
 void UCUserWidget_ItemSlot::NativeOnInitialized()
 {
-	Super::NativeOnInitialized();
-
 	ToolTip = CreateWidget<UCUserWidget_ToolTip, APlayerController>(GetOwningPlayer(), ToolTipClass);
 	ToolTip->SetVisibility(ESlateVisibility::Collapsed);
+
+	Super::NativeOnInitialized();
 }
 
 FReply UCUserWidget_ItemSlot::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	CheckEmptyResult(ItemName, FReply::Unhandled());
-	CheckNullResult(ItemData.SumNail, FReply::Unhandled());
+	CheckEmptyResult(ItemData.Desc, FReply::Unhandled());
 	CheckNullResult(ToolTip, FReply::Unhandled());
 
 	Super::NativeOnMouseMove(InGeometry, InMouseEvent);
@@ -51,23 +52,22 @@ FReply UCUserWidget_ItemSlot::NativeOnMouseMove(const FGeometry& InGeometry, con
 
 void UCUserWidget_ItemSlot::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	CheckEmpty(ItemName);
-	CheckNull(ItemData.SumNail);
 	CheckNull(ToolTip);
+	CheckEmpty(ItemName);
+	CheckEmpty(ItemData.Desc);
 	CheckFalse(ToolTip->GetVisibility() != ESlateVisibility::HitTestInvisible);
 
 	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
 
 	ToolTip->SetVisibility(ESlateVisibility::HitTestInvisible);
-
 	bEnter = true;	
 }
 
 void UCUserWidget_ItemSlot::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
 {
-	CheckEmpty(ItemName);
-	CheckNull(ItemData.SumNail);
 	CheckNull(ToolTip);
+	CheckEmpty(ItemName);
+	CheckEmpty(ItemData.Desc);
 	CheckFalse(ToolTip->GetVisibility() != ESlateVisibility::Collapsed);
 
 	Super::NativeOnMouseLeave(InMouseEvent);
@@ -105,6 +105,9 @@ void UCUserWidget_ItemSlot::SetAmount(const int32& InAmount)
 
 void UCUserWidget_ItemSlot::Update(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData)
 {
+	CheckEmpty(InItemName);
+	CheckEmpty(InItemData.Desc);
+
 	CharacterType = InCharacterType;
 	EquipType = InEquipType;
 	ItemName = InItemName;
@@ -119,6 +122,7 @@ void UCUserWidget_ItemSlot::Update(const ECharacter& InCharacterType, const EEqu
 	InEquipType != EEquipmentType::None ? view = ESlateVisibility::Hidden : view = ESlateVisibility::Visible;
 	Amount->SetVisibility(view);
 
+	CheckNull(ToolTip);
 	ToolTip->Update(ItemName, ItemData);
 }
 
@@ -139,14 +143,11 @@ void UCUserWidget_ItemSlot::UseItem()
 {
 	CheckEmpty(ItemName);
 
-	ACEquipCharacter* owner = Cast<ACEquipCharacter>(GetOwningPlayer()->GetPawn());
+	ACPlayer* owner = Cast<ACPlayer>(GetOwningPlayer()->GetPawn());
 	CheckNull(owner);
 
 	UCInventoryComponent* inventory = CHelpers::GetComponent<UCInventoryComponent>(owner);
 	CheckNull(inventory);
-
-	UCUserWidget_Equipment* equipWidget = inventory->GetEquipment();
-	CheckNull(equipWidget);
 
 	switch (EquipType)
 	{
@@ -158,16 +159,28 @@ void UCUserWidget_ItemSlot::UseItem()
 		}
 		default:
 		{
+			UCEquipComponent* equip = CHelpers::GetComponent<UCEquipComponent>(owner);
+			CheckNull(equip);
+
+			UCUserWidget_Equipment* equipWidget = inventory->GetEquipment();
+			CheckNull(equipWidget);
+
 			// 바꾸려는 EquipSlot에 아이템이 존재할 경우 Swap
 			if (equipWidget->IsValidSlot(EquipType))
 			{
-				UCUserWidget_EquipSlot* equipSlot = equipWidget->GetSlot(EquipType);
+				EEquipmentType typeTemp = EquipType;
+				FString nameTemp = ItemName;
+				FItem itemTemp = ItemData;
+
+				UCUserWidget_EquipSlot* equipSlot = equipWidget->GetSlot(EquipType); 
 				Update(equipSlot->GetCharacterType(), equipSlot->GetEquipmentType(), equipSlot->GetItemName(), equipSlot->GetItemData());
-				inventory->AddEquip(CharacterType, EquipType, ItemName, ItemData);
+				
+				equip->Equip(typeTemp, nameTemp, itemTemp);
+				
 				return;
 			}
-
-			inventory->AddEquip(CharacterType, EquipType, ItemName, ItemData);
+			
+			equip->Equip(EquipType, ItemName, ItemData);
 			break;
 		}
 	}

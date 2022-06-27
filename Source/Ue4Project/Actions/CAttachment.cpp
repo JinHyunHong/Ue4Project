@@ -1,4 +1,4 @@
-#include "Actors/CAttachment.h"
+#include "Actions/CAttachment.h"
 #include "Global.h"
 #include "GameFramework/Character.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -40,9 +40,36 @@ void ACAttachment::AttachToCollision(UShapeComponent* InComponent, FName InSoket
 
 void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	CheckTrue(OwnerCharacter == OtherActor);
+	CheckTrue(OtherActor->GetClass() == OwnerCharacter->GetClass());
+
+	if (OnAttachmentBeginOverlap.IsBound())
+		OnAttachmentBeginOverlap.Broadcast(OwnerCharacter, this, Cast<ACharacter>(OtherActor));
 }
 
 void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	if (OnAttachmentEndOverlap.IsBound())
+		OnAttachmentEndOverlap.Broadcast(OwnerCharacter, this, Cast<ACharacter>(OtherActor));
+}
+
+void ACAttachment::OnCollision()
+{
+	// ÄÑÁÜ
+	for (UShapeComponent* component : ShapeComponents)
+		component->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	if (OnAttachmentCollision.IsBound())
+		OnAttachmentCollision.Broadcast();
+}
+
+void ACAttachment::OffCollision()
+{
+	// ²¨ÁÜ
+	for (UShapeComponent* component : ShapeComponents)
+		component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	if (OffAttachmentCollision.IsBound())
+		OffAttachmentCollision.Broadcast();
 }
 

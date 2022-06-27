@@ -56,10 +56,10 @@ void UCUserWidget_Equipment::OnExitPress()
 
 
 
-void UCUserWidget_Equipment::AddEquip(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData, bool bInitEquip)
+void UCUserWidget_Equipment::AddEquip(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData)
 {
 	UCUserWidget_EquipSlot* slot = Datas[InEquipType];
-	slot->Update(InCharacterType, InEquipType, InItemName, InItemData, bInitEquip);
+	slot->Update(InCharacterType, InEquipType, InItemName, InItemData);
 }
 
 bool UCUserWidget_Equipment::IsValidSlot(const EEquipmentType& InEquipType)

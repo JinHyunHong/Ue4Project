@@ -2,7 +2,7 @@
 #include "Global.h"
 #include "Engine/SkeletalMesh.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Actors/CAttachment.h"
+#include "Actions/CAttachment.h"
 
 UCEquipComponent::UCEquipComponent()
 {
@@ -12,18 +12,21 @@ UCEquipComponent::UCEquipComponent()
 void UCEquipComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	OwnerCharacter = Cast<ACEquipCharacter>(GetOwner());
 }
 
-FItem UCEquipComponent::Equip(const EEquipmentType& InEquipType, const FString& InItemName)
+void UCEquipComponent::Equip(const EEquipmentType& InEquipType, const FString& InItemName)
 {
-	FName characterType = FName(CHelpers::GetEnumToString(*OwnerCharacter->GetCharacterType(), "ECharacter"));
+	CheckEmpty(InItemName);
+
+	ACEquipCharacter* owner = Cast<ACEquipCharacter>(GetOwner());
+	CheckNull(owner);
+
+	FName characterType = FName(CHelpers::GetEnumToString(*owner->GetCharacterType(), "ECharacter"));
 	FName itemName = FName(InItemName);
 	FItem itemData;
 
 	FEquipmentDataTables* equipDatas = DataTable->FindRow<FEquipmentDataTables>(characterType, FString(""));
-	CheckNullResult(equipDatas, FItem());
+	CheckNull(equipDatas);
 
 	UDataTable* equipData = NULL;
 
@@ -102,43 +105,57 @@ FItem UCEquipComponent::Equip(const EEquipmentType& InEquipType, const FString& 
 		case EEquipmentType::Weapon:
 		{
 			FTransform transform;
-
+			
 			equipData = equipDatas->WeaponTable;
 			FEquipment_Weapon* weaponData = equipData->FindRow<FEquipment_Weapon>(itemName, FString(""));
 			itemData = weaponData->Item;
-			TSubclassOf<ACAttachment> attachmentClass = itemData.AttachmentClass;
-			CheckNullResult(attachmentClass, FItem());
-			
-			Weapon = OwnerCharacter->GetWorld()->SpawnActorDeferred<ACAttachment>(attachmentClass, transform, OwnerCharacter);
-			CheckNullResult(Weapon, FItem());
-			
-			Weapon->SetActorLabel(OwnerCharacter->GetActorLabel() + "_" + Weapon->GetActorLabel());
-			
-			UGameplayStatics::FinishSpawningActor(Weapon, transform);
-			
-			return itemData;
+
+			break;
 		}
 	}
 
-	CheckNullResult(itemData.Mesh, FItem());
-	
-	USkeletalMeshComponent* component = OwnerCharacter->GetEquipMesh(InEquipType);
-	component->SetSkeletalMesh(itemData.Mesh);
 
-	return itemData;
+	Equip(InEquipType, InItemName, itemData);
+
+	return;
 }
 
-bool UCEquipComponent::UnEquip(const EEquipmentType& InEquipType)
+bool UCEquipComponent::Unequip(const EEquipmentType& InEquipType)
 {
-	if (InEquipType == EEquipmentType::Weapon)
-	{
-		Weapon->Destroy();
-
-		return true;
-	}
-
-	USkeletalMeshComponent* component = OwnerCharacter->GetEquipMesh(InEquipType);
-	component->SetSkeletalMesh(NULL);
+	FString itemName = FString();
+	FItem item = FItem();
+	Unequip(InEquipType, itemName, item);
 
 	return true;
+}
+
+void UCEquipComponent::Equip(const EEquipmentType& InEquipType, const FString& InItemName, FItem& InItemData)
+{
+	ACEquipCharacter* owner = Cast<ACEquipCharacter>(GetOwner());
+	CheckNull(owner);
+
+	if (InEquipType != EEquipmentType::Weapon)
+	{
+		CheckNull(InItemData.Mesh);
+		USkeletalMeshComponent* component = owner->GetEquipMesh(InEquipType);
+		component->SetSkeletalMesh(InItemData.Mesh);
+	}
+
+	if (OnEquipChanged.IsBound())
+		OnEquipChanged.Broadcast(InEquipType, InItemName, InItemData);
+}
+
+void UCEquipComponent::Unequip(const EEquipmentType& InEquipType, const FString& InItemName, FItem& InItemData)
+{
+	ACEquipCharacter* owner = Cast<ACEquipCharacter>(GetOwner());
+	CheckNull(owner);
+
+	if (InEquipType != EEquipmentType::Weapon)
+	{
+		USkeletalMeshComponent* component = owner->GetEquipMesh(InEquipType);
+		component->SetSkeletalMesh(NULL);
+	}
+
+	if (OnUnequipChanged.IsBound())
+		OnUnequipChanged.Broadcast(InEquipType, InItemName, InItemData);
 }

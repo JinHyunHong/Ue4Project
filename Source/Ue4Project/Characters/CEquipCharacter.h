@@ -149,9 +149,6 @@ struct FItem
 
 public:
 	UPROPERTY(EditAnywhere)
-		TSubclassOf<class ACAttachment> AttachmentClass;
-
-	UPROPERTY(EditAnywhere)
 		class USkeletalMesh* Mesh;
 
 	UPROPERTY(EditAnywhere)
@@ -336,6 +333,18 @@ protected:
 	UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly)
 		class UCEquipComponent* Equip;
 
+	UPROPERTY(VisibleDefaultsOnly)
+		class UCActionComponent* Action;
+
+	UPROPERTY(VisibleDefaultsOnly)
+		class UCStateComponent* State;
+
+	UPROPERTY(VisibleDefaultsOnly)
+		class UCStatusComponent* Status;
+
+	UPROPERTY(VisibleDefaultsOnly)
+		class UCMontagesComponent* Montages;
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "CharacterMesh")
 		UDataTable* DataTable;
@@ -393,15 +402,15 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 		class USkeletalMeshComponent* EqRightBracer;
 
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+		class USkeletalMeshComponent* EqWeapon; // Only Preview
+
 public:
 	FORCEINLINE const ECharacter* GetCharacterType() { return &CharacterType; }
 
 protected:
 	UFUNCTION(BlueprintCallable)
 		void SetCharacter(const ECharacter& InType);
-	
-	UFUNCTION(BlueprintCallable)
-		void SetMasterPose();
 
 protected:
 	void UpdateMesh();
@@ -413,6 +422,8 @@ protected:
 public:
 	ACEquipCharacter();
 
+	virtual void OnConstruction(const FTransform& Transform) override;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -422,7 +433,12 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
+	virtual void Begin_Dead() {};
+	virtual void End_Dead() {};
+
+public:
 	USkeletalMeshComponent* GetEquipMesh(const EEquipmentType& InEquipType);
+
 
 protected:
 	TArray<USkeletalMeshComponent*> Bodies;

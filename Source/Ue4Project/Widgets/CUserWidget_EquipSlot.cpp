@@ -20,16 +20,16 @@ void UCUserWidget_EquipSlot::NativePreConstruct()
 
 void UCUserWidget_EquipSlot::NativeOnInitialized()
 {
-	Super::NativeOnInitialized();
-
 	ToolTip = CreateWidget<UCUserWidget_ToolTip, APlayerController>(GetOwningPlayer(), ToolTipClass);
 	ToolTip->SetVisibility(ESlateVisibility::Collapsed);
+
+	Super::NativeOnInitialized();
 }
 
 FReply UCUserWidget_EquipSlot::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	CheckEmptyResult(ItemName, FReply::Unhandled());
-	CheckNullResult(ItemData.SumNail, FReply::Unhandled());
+	CheckEmptyResult(ItemData.Desc, FReply::Unhandled());
 	CheckNullResult(ToolTip, FReply::Unhandled());
 
 	Super::NativeOnMouseMove(InGeometry, InMouseEvent);
@@ -50,23 +50,22 @@ FReply UCUserWidget_EquipSlot::NativeOnMouseMove(const FGeometry& InGeometry, co
 
 void UCUserWidget_EquipSlot::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	CheckEmpty(ItemName);
-	CheckNull(ItemData.SumNail);
 	CheckNull(ToolTip);
+	CheckEmpty(ItemName);
+	CheckEmpty(ItemData.Desc);
 	CheckFalse(ToolTip->GetVisibility() != ESlateVisibility::HitTestInvisible);
 
 	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
 
 	ToolTip->SetVisibility(ESlateVisibility::HitTestInvisible);
-
 	bEnter = true;
 }
 
 void UCUserWidget_EquipSlot::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
 {
-	CheckEmpty(ItemName);
-	CheckNull(ItemData.SumNail);
 	CheckNull(ToolTip);
+	CheckEmpty(ItemName);
+	CheckEmpty(ItemData.Desc);
 	CheckFalse(ToolTip->GetVisibility() != ESlateVisibility::Collapsed);
 
 	Super::NativeOnMouseLeave(InMouseEvent);
@@ -90,8 +89,12 @@ FReply UCUserWidget_EquipSlot::NativeOnMouseButtonDown(const FGeometry& InGeomet
 	return FReply::Handled();
 }
 
-void UCUserWidget_EquipSlot::Update(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData, bool bInitEquip)
+void UCUserWidget_EquipSlot::Update(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData)
 {
+	CheckEmpty(InItemName);
+	CheckTrue(InEquipType == EEquipmentType::None);
+	CheckEmpty(InItemData.Desc);
+
 	CharacterType = InCharacterType;
 	EquipType = InEquipType;
 	ItemName = InItemName;
@@ -100,18 +103,8 @@ void UCUserWidget_EquipSlot::Update(const ECharacter& InCharacterType, const EEq
 	ItemImage->SetBrushFromTexture(ItemData.SumNail);
 	ItemImage->SetColorAndOpacity(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
 
+	CheckNull(ToolTip);
 	ToolTip->Update(ItemName, ItemData);
-
-	ACEquipCharacter* owner = Cast<ACEquipCharacter>(GetOwningPlayer()->GetPawn());
-	CheckNull(owner);
-
-	UCEquipComponent* equip = CHelpers::GetComponent<UCEquipComponent>(owner);
-	CheckNull(equip);
-
-	UCInventoryComponent* inventory = CHelpers::GetComponent<UCInventoryComponent>(owner);
-	CheckNull(inventory);
-
-	if (bInitEquip == false) equip->Equip(EquipType, ItemName);
 }
 
 void UCUserWidget_EquipSlot::DeleteItem()
@@ -124,6 +117,7 @@ void UCUserWidget_EquipSlot::DeleteItem()
 
 	ItemImage->SetColorAndOpacity(BackColor);
 
+	CheckNull(ToolTip);
 	ToolTip->SetVisibility(ESlateVisibility::Hidden);
 }
 
@@ -137,11 +131,7 @@ void UCUserWidget_EquipSlot::UnEquipItem()
 	UCEquipComponent* equip = CHelpers::GetComponent<UCEquipComponent>(owner);
 	CheckNull(equip);
 
-	UCInventoryComponent* inventory = CHelpers::GetComponent<UCInventoryComponent>(owner);
-	CheckNull(inventory);
-
-	equip->UnEquip(EquipType);
-	inventory->AddItem(CharacterType, EquipType, ItemName, ItemData);
+	equip->Unequip(EquipType, ItemName, ItemData);
 	DeleteItem();
 }
 
