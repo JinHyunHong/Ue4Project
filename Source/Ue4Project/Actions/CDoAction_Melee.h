@@ -18,6 +18,9 @@ public:
 	virtual void Begin_DoAction() override;
 	virtual void End_DoAction() override;
 
+	virtual void DoSkill(const FString& InSkillName) override;
+	virtual void DoSkill(const int32& InIndex) override;
+
 public:
 	virtual void OnAttachmentBeginOverlap(class ACharacter* InAttacker, class AActor* InAttackCauser, class ACharacter* InOtherCharacter) override;
 	virtual void OnAttachmentEndOverlap(class ACharacter* InAttacker, class AActor* InAttackCauser, class ACharacter* InOtherCharacter) override;
@@ -37,5 +40,5 @@ private:
 	int32 Index; // 현재 몇번째 콤보중인지
 
 	TArray<ACharacter*> HittedCharacters;
-	
+	class UNiagaraComponent* Niagara;
 };

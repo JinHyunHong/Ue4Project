@@ -52,28 +52,29 @@ FReply UCUserWidget_ItemSlot::NativeOnMouseMove(const FGeometry& InGeometry, con
 
 void UCUserWidget_ItemSlot::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	CheckNull(ToolTip);
-	CheckEmpty(ItemName);
-	CheckEmpty(ItemData.Desc);
-	CheckFalse(ToolTip->GetVisibility() != ESlateVisibility::HitTestInvisible);
-
 	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
 
+	bEnter = true;
+
+	CheckEmpty(ItemName);
+	CheckEmpty(ItemData.Desc);
+
+	CheckNull(ToolTip);
+	CheckTrue(ToolTip->GetVisibility() == ESlateVisibility::HitTestInvisible);
 	ToolTip->SetVisibility(ESlateVisibility::HitTestInvisible);
-	bEnter = true;	
 }
 
 void UCUserWidget_ItemSlot::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
 {
-	CheckNull(ToolTip);
-	CheckEmpty(ItemName);
-	CheckEmpty(ItemData.Desc);
-	CheckFalse(ToolTip->GetVisibility() != ESlateVisibility::Collapsed);
-
 	Super::NativeOnMouseLeave(InMouseEvent);
 
 	bEnter = false;
 
+	CheckEmpty(ItemName);
+	CheckEmpty(ItemData.Desc);
+
+	CheckNull(ToolTip);
+	CheckTrue(ToolTip->GetVisibility() == ESlateVisibility::Collapsed);
 	ToolTip->SetVisibility(ESlateVisibility::Collapsed);
 }
 
@@ -86,7 +87,6 @@ FReply UCUserWidget_ItemSlot::NativeOnMouseButtonDown(const FGeometry& InGeometr
 	CheckFalseResult(InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton), FReply::Unhandled());
 
 	// ItemUse
-	CLog::Print("RightClick");
 	UseItem();
 		
 	return FReply::Handled();
@@ -128,7 +128,7 @@ void UCUserWidget_ItemSlot::Update(const ECharacter& InCharacterType, const EEqu
 
 void UCUserWidget_ItemSlot::DeleteItem()
 {
-	CharacterType = ECharacter::Sword;
+	CharacterType = ECharacter::Man;
 	EquipType = EEquipmentType::None;
 	ItemName = "";
 	ItemData = FItem();

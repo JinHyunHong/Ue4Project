@@ -15,6 +15,10 @@ class UE4PROJECT_API IICharacter
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+		void ChangeColor(FLinearColor InColor); // 캐릭터 마다 Material수가 다름
+	virtual void ChangeColor_Implementation(FLinearColor InColor) {};
+
 	virtual void Begin_Dead() {};
 	virtual void End_Dead() {};
 };

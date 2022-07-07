@@ -19,8 +19,13 @@ void UCAnimNotify_EndAction::Notify(USkeletalMeshComponent* MeshComp, UAnimSeque
 	UCActionComponent* action = CHelpers::GetComponent<UCActionComponent>(MeshComp->GetOwner());
 	CheckNull(action);
 	
-	// 애초에 없으면 이 애니메이션에 들어올 수 없어서 따로 NULL체크 안함
-	action->GetData()->GetDoAction()->End_DoAction();
+	UCAction* actionData = action->GetData();
+	CheckNull(actionData);
+
+	ACDoAction* doAction = actionData->GetDoAction();
+	CheckNull(doAction);
+
+	doAction->End_DoAction();
 }
 
 

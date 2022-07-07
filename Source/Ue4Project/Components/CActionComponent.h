@@ -9,7 +9,7 @@
 UENUM(BlueprintType)
 enum class EActionType : uint8
 {
-	Unarmed, OneHand, TwoHand, Max,
+	Unarmed, OneHand, DoubleAxe, Max,
 };
 
 
@@ -40,9 +40,6 @@ public:
 	UFUNCTION(BlueprintPure)
 		bool IsOneHandMode();
 
-	UFUNCTION(BlueprintPure)
-		bool IsTwoHandMode();
-
 public:
 	UCActionComponent();
 
@@ -51,6 +48,8 @@ public:
 
 public:
 	void DoAction();
+	void DoSkill(const FString& InSkillName);
+	void DoSkill(const int32& InIndex);
 
 protected:
 	virtual void BeginPlay() override;

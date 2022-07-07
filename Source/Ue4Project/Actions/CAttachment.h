@@ -18,7 +18,7 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly)
 		class USceneComponent* Scene;
 
-	UPROPERTY(VisibleDefaultsOnly)
+	UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly)
 		class USkeletalMeshComponent* Mesh;
 
 protected:
@@ -26,7 +26,11 @@ protected:
 		void AttachTo(FName InSoketName);
 
 	UFUNCTION(BlueprintCallable)
-		void AttachToCollision(class UShapeComponent* InComponent, FName InSoketName);
+		void AttachToCollision(class UShapeComponent* InComponent, FName InSoketName); // 각 Collision을 붙일 수 있음(Collision 여러개 일때 유용)
+
+	UFUNCTION(BlueprintCallable)
+		void AttachToMesh(class USkeletalMeshComponent* InComponent, FName InSoketName); // 각 Mesh를 붙일 수 있음(무기가 2개 일때 유용)
+
 	
 public:	
 	ACAttachment();

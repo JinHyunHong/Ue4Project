@@ -19,7 +19,13 @@ void UCAnimNotify_BeginAction::Notify(USkeletalMeshComponent* MeshComp, UAnimSeq
 	UCActionComponent* action = CHelpers::GetComponent<UCActionComponent>(MeshComp->GetOwner());
 	CheckNull(action);
 
-	action->GetData()->GetDoAction()->Begin_DoAction();
+	UCAction* actionData = action->GetData();
+	CheckNull(actionData);
+
+	ACDoAction* doAction = actionData->GetDoAction();
+	CheckNull(doAction);
+
+	doAction->Begin_DoAction();
 }
 
 

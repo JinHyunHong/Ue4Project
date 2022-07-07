@@ -22,6 +22,8 @@ void ACAttachment::BeginPlay()
 		component->OnComponentEndOverlap.AddDynamic(this, &ACAttachment::OnComponentEndOverlap);
 	}
 
+	OffCollision();
+
 	Super::BeginPlay();
 }
 
@@ -35,6 +37,12 @@ void ACAttachment::AttachTo(FName InSoketName)
 void ACAttachment::AttachToCollision(UShapeComponent* InComponent, FName InSoketName)
 {
 	// AttachToCollision
+	InComponent->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), InSoketName);
+}
+
+void ACAttachment::AttachToMesh(USkeletalMeshComponent* InComponent, FName InSoketName)
+{
+	// AttachToMesh
 	InComponent->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), InSoketName);
 }
 

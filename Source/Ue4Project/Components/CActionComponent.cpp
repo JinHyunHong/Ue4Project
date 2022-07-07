@@ -56,6 +56,7 @@ void UCActionComponent::SetAction(const FString& InItemName)
 		doAction->AttachToComponent(owner->GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true));
 		doAction->SetActorLabel(GetLableName(owner, "DoAction"));
 		doAction->SetDatas(actionData->DoActionDatas);
+		doAction->SetSkillDatas(actionData->DoSkillDatas);
 		UGameplayStatics::FinishSpawningActor(doAction, transform);
 	
 		if (!!equipment)
@@ -96,12 +97,6 @@ bool UCActionComponent::IsOneHandMode()
 {
 	CheckNullResult(Data, false);
 	return Data->Type == EActionType::OneHand;
-}
-
-bool UCActionComponent::IsTwoHandMode()
-{
-	CheckNullResult(Data, false);
-	return Data->Type == EActionType::TwoHand;
 }
 
 UCActionComponent::UCActionComponent()
@@ -182,9 +177,34 @@ void UCActionComponent::DoAction()
 {
 	CheckTrue(IsUnarmedMode());
 	CheckNull(Data);
+	CheckNull(Data->GetDoAction());
 
 	ACDoAction* action = Data->GetDoAction();
 
 	if (!!action)
 		action->DoAction();
+}
+
+void UCActionComponent::DoSkill(const FString& InSkillName)
+{
+	CheckTrue(IsUnarmedMode());
+	CheckNull(Data);
+	CheckNull(Data->GetDoAction());
+
+	ACDoAction* action = Data->GetDoAction();
+
+	if (!!action)
+		action->DoSkill(InSkillName);
+}
+
+void UCActionComponent::DoSkill(const int32& InIndex)
+{
+	CheckTrue(IsUnarmedMode());
+	CheckNull(Data);
+	CheckNull(Data->GetDoAction());
+
+	ACDoAction* action = Data->GetDoAction();
+
+	if (!!action)
+		action->DoSkill(InIndex);
 }

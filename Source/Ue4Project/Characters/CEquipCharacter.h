@@ -2,13 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Characters/CActionCharacter.h"
 #include "Engine/DataTable.h"
 #include "CEquipCharacter.generated.h"
 
 UENUM(BlueprintType)
 enum class ECharacter : uint8
 {
-	Sword, Max
+	Man, Max
 };
 
 UENUM(BlueprintType)
@@ -65,7 +66,7 @@ enum class SleeveType : uint8
 UENUM(BlueprintType)
 enum class WeaponType : uint8
 {
-	Sword, Axe, Dagger, Rod,
+	Sword, Axe, DoubleAxe, Dagger, Rod,
 };
 
 USTRUCT(BlueprintType)
@@ -325,25 +326,13 @@ public:
 
 
 UCLASS()
-class UE4PROJECT_API ACEquipCharacter : public ACharacter
+class UE4PROJECT_API ACEquipCharacter : public ACActionCharacter
 {
 	GENERATED_BODY()
 
 protected:
 	UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly)
 		class UCEquipComponent* Equip;
-
-	UPROPERTY(VisibleDefaultsOnly)
-		class UCActionComponent* Action;
-
-	UPROPERTY(VisibleDefaultsOnly)
-		class UCStateComponent* State;
-
-	UPROPERTY(VisibleDefaultsOnly)
-		class UCStatusComponent* Status;
-
-	UPROPERTY(VisibleDefaultsOnly)
-		class UCMontagesComponent* Montages;
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "CharacterMesh")
@@ -433,8 +422,9 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
-	virtual void Begin_Dead() {};
-	virtual void End_Dead() {};
+	virtual void ChangeColor_Implementation(FLinearColor InColor) override;
+	virtual void Begin_Dead() override {};
+	virtual void End_Dead() override {};
 
 public:
 	USkeletalMeshComponent* GetEquipMesh(const EEquipmentType& InEquipType);
@@ -446,4 +436,8 @@ protected:
 
 protected:
 	FCharacterMesh CharacterInfo;
+
+private:
+	class UMaterialInstanceDynamic* BodyMaterial;
+
 };

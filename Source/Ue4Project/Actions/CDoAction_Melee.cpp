@@ -1,8 +1,14 @@
 #include "Actions/CDoAction_Melee.h"
 #include "Global.h"
+#include "Characters/CActionCharacter.h"
 #include "GameFramework/Character.h"
 #include "Components/CStateComponent.h"
 #include "Components/CStatusComponent.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundCue.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
+#include "NiagaraComponent.h"
 
 void ACDoAction_Melee::DoAction()
 {
@@ -22,14 +28,16 @@ void ACDoAction_Melee::DoAction()
 	}
 
 
+	CheckNull(Datas[0].AnimMontage);
 	// IdleMode여야 함
 	CheckFalse(State->IsIdleMode());
 	State->SetActionMode();
 
 	const FDoActionData& data = Datas[0];
-	OwnerCharacter->PlayAnimMontage(data.AnimMontage, data.PlayRatio, data.StartSection);
 
-	data.bCanMove ? Status->SetMove() : Status->SetStop();
+	OwnerCharacter->PlayAnimMontage(data.AnimMontage, data.PlayRatio * OffsetRatio, data.StartSection);
+
+	data.bCanMove ? Status->SetMove() : Status->SetStop();		
 }
 
 void ACDoAction_Melee::Begin_DoAction()
@@ -37,6 +45,8 @@ void ACDoAction_Melee::Begin_DoAction()
 	Super::Begin_DoAction();
 
 	CheckFalse(bExist);
+	CheckNull(Datas[Index].AnimMontage);
+
 	bExist = false;
 
 	// 현재 플레이 중인 모든 몽타주를 중지시킴
@@ -47,7 +57,7 @@ void ACDoAction_Melee::Begin_DoAction()
 	Index++;
 
 	const FDoActionData& data = Datas[Index];
-	OwnerCharacter->PlayAnimMontage(data.AnimMontage, data.PlayRatio, data.StartSection);
+	OwnerCharacter->PlayAnimMontage(data.AnimMontage, data.PlayRatio * OffsetRatio, data.StartSection);
 
 	data.bCanMove ? Status->SetMove() : Status->SetStop();
 }
@@ -56,21 +66,76 @@ void ACDoAction_Melee::End_DoAction()
 {
 	Super::End_DoAction();
 
-	const FDoActionData& data = Datas[Index];
 	// 현재 몽타주 중단 시킴
-	OwnerCharacter->StopAnimMontage(data.AnimMontage);
+	OwnerCharacter->StopAnimMontage();
 
 	State->SetIdleMode();
 	Status->SetMove();
 
+	if (bSkill && SkillDatas[Index].OffsetRatio > 1.0f)
+		UKismetSystemLibrary::K2_SetTimer(this, "RestoreRatio", SkillDatas[Index].RatioDuration, false);
+
 	// 다시 처음부터 공격할 수 있게 처리
 	Index = 0;
+	bSkill = false;
+
+	// 기존 Effect 제거
+	Niagara ? Niagara->DestroyComponent() : Niagara = NULL;
+}
+
+void ACDoAction_Melee::DoSkill(const FString& InSkillName)
+{
+	Super::DoSkill(InSkillName);
+
+	CheckFalse(State->IsIdleMode());
+
+	for (int32 i = 0; i < SkillDatas.Num(); i++)
+	{
+		if (SkillDatas[i].SkillName.ToString() == InSkillName && SkillDatas[i].OffsetRatio > 1.0f)
+		{
+			CheckNull(SkillDatas[i].AnimMontage);
+
+			State->SetActionMode();
+			OwnerCharacter->PlayAnimMontage(SkillDatas[i].AnimMontage, SkillDatas[i].PlayRatio * OffsetRatio, SkillDatas[i].StartSection);
+			OffsetRatio = SkillDatas[i].OffsetRatio;
+			
+			SkillDatas[i].bCanMove ? Status->SetMove() : Status->SetStop();
+
+			Index = i;
+			bSkill = true;
+
+			return;
+		}
+	}
+}
+
+void ACDoAction_Melee::DoSkill(const int32& InIndex)
+{
+	Super::DoSkill(InIndex);
+
+	CheckNull(SkillDatas[InIndex].AnimMontage);
+	CheckFalse(State->IsIdleMode());
+
+	const FDoSkillData& data = SkillDatas[InIndex];
+
+	State->SetActionMode();
+	
+	OwnerCharacter->PlayAnimMontage(data.AnimMontage, data.PlayRatio * OffsetRatio, data.StartSection);
+	if (data.OffsetRatio > 1.0f) OffsetRatio = data.OffsetRatio;
+
+	data.bCanMove ? Status->SetMove() : Status->SetStop();
+
+	Index = InIndex;
+	bSkill = true;
 }
 
 void ACDoAction_Melee::OnAttachmentBeginOverlap(class ACharacter* InAttacker, class AActor* InAttackCauser, class ACharacter* InOtherCharacter)
 {
 	Super::OnAttachmentBeginOverlap(InAttacker, InAttackCauser, InOtherCharacter);
 	CheckNull(InOtherCharacter);
+
+	ACActionCharacter* owner = Cast<ACActionCharacter>(OwnerCharacter);
+	CheckNull(owner);
 
 	for (const ACharacter* other : HittedCharacters)
 	{
@@ -79,17 +144,32 @@ void ACDoAction_Melee::OnAttachmentBeginOverlap(class ACharacter* InAttacker, cl
 	}
 	HittedCharacters.Add(InOtherCharacter);
 
+	FDoActionData data;
+	bSkill ? data = SkillDatas[Index] : data = Datas[Index];
 
-	UParticleSystem* hitEffect = Datas[Index].Effect;
+	UParticleSystem* hitEffect = data.Effect;
 	if (!!hitEffect)
 	{
-		FTransform transform = Datas[Index].EffectTransform;
+		FTransform transform = data.EffectTransform;
 		// EffectTransform 보정 만큼 이동
 		transform.AddToTranslation(InOtherCharacter->GetActorLocation());
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), hitEffect, transform);
 	}
 
-	float hitStop = Datas[Index].HitStop;
+	UNiagaraSystem* niagara = data.NiagaraEffect;
+	if (!!niagara)
+	{
+		// 기존 Effect 제거
+		Niagara ? Niagara->DestroyComponent() : Niagara = NULL;
+
+		FTransform transform = data.NiagaraTransform;
+		transform.AddToTranslation(owner->GetActorLocation());
+		transform.SetRotation(owner->GetActorRotation().Quaternion());
+		
+		Niagara = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), niagara, transform.GetLocation(), transform.GetRotation().Rotator(), transform.GetScale3D());
+	}
+
+	float hitStop = data.HitStop;
 	// 0 이랑 가깝지 않으면 함
 	if (FMath::IsNearlyZero(hitStop) == false)
 	{
@@ -101,15 +181,26 @@ void ACDoAction_Melee::OnAttachmentBeginOverlap(class ACharacter* InAttacker, cl
 		UKismetSystemLibrary::K2_SetTimer(this, "RestoreDilation", hitStop * 1e-3f, false);
 	}
 
-	TSubclassOf<UMatineeCameraShake> shake = Datas[Index].ShakeClass;
+	TSubclassOf<UMatineeCameraShake> shake = data.ShakeClass;
 	if (!!shake)
 		UGameplayStatics::GetPlayerController(GetWorld(), 0)->PlayerCameraManager->StartCameraShake(shake);
+
+
+	if (!!data.Sound)
+	{
+		UAudioComponent* audio = CHelpers::GetComponent<UAudioComponent>(owner);
+		data.Sound->VolumeMultiplier = data.Volume;
+		audio->Stop();
+		audio->SetSound(data.Sound);
+		audio->Play();
+	}
+
 
 	// 데미지 추가 정보를 넘길때
 	FDamageEvent e;
 
 	// 1. 데미지, 2. 데미지 이벤트, 3 : Instigator(컨트롤러), 4 : DamageCursor(데미지 야기하는 친구)
-	InOtherCharacter->TakeDamage(Datas[Index].Power, e, OwnerCharacter->GetController(), this);
+	InOtherCharacter->TakeDamage(data.Power, e, OwnerCharacter->GetController(), this);
 }
 
 
@@ -130,4 +221,3 @@ void ACDoAction_Melee::RestoreDilation()
 {
 	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
 }
-

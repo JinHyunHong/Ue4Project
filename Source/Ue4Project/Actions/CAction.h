@@ -22,6 +22,13 @@ public:
 	UPROPERTY(EditAnywhere)
 		FName StartSection;
 
+	// Equip정보에서는 Equip 사운드, Action에서는 HitSound
+	UPROPERTY(EditAnywhere)
+		class USoundCue* Sound;
+
+	UPROPERTY(EditAnywhere)
+		float Volume = 1.0f;
+
 	UPROPERTY(EditAnywhere)
 		bool bCanMove = true;
 
@@ -53,9 +60,38 @@ public:
 	UPROPERTY(EditAnywhere)
 		FTransform EffectTransform;
 
+	// 나이아가라 이펙트도 사용할 수 있도록 함
+	UPROPERTY(EditAnywhere)
+		class UNiagaraSystem* NiagaraEffect;
+
+	UPROPERTY(EditAnywhere)
+		FTransform NiagaraTransform;
+
 	// 타격시 카메라의 흔들림을 구현할 클래스
 	UPROPERTY(EditAnywhere)
 		TSubclassOf<class UMatineeCameraShake> ShakeClass;
+};
+
+USTRUCT(BlueprintType)
+struct FDoSkillData : public FDoActionData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+		FName SkillName;
+	
+	UPROPERTY(EditAnywhere)
+		class UTexture2D* SumNail;
+
+	UPROPERTY(EditAnywhere)
+		float MaxCoolTime = 5.0f;
+
+	UPROPERTY(EditAnywhere)
+		float OffsetRatio = 1.0f; // 공격 속도 Offset
+
+	UPROPERTY(EditAnywhere)
+		float RatioDuration = 10.0f; // 공격 속도 Offset 지속 시간
 };
 
 USTRUCT(BlueprintType)
@@ -81,6 +117,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 		TArray<FDoActionData> DoActionDatas;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+		TArray<FDoSkillData> DoSkillDatas;
 };
 
 

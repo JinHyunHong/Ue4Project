@@ -12,7 +12,11 @@ class UE4PROJECT_API ACDoAction : public AActor
 	
 public:
 	FORCEINLINE void SetDatas(TArray<FDoActionData> InDatas) { Datas = InDatas; }
+	FORCEINLINE void SetSkillDatas(TArray<FDoSkillData> InDatas) { SkillDatas = InDatas; }
 	FORCEINLINE void SetEquipped(const bool* InEquipped) { bEquipped = InEquipped; }
+
+	FORCEINLINE TArray<FDoActionData>& GetDatas() { return Datas; }
+	FORCEINLINE TArray<FDoSkillData>& GetSkillDatas() { return SkillDatas; }
 
 public:
 	ACDoAction();
@@ -25,9 +29,16 @@ public:
 	// 몽타주에 의해 종료
 	virtual void End_DoAction() {};
 
+	virtual void DoSkill(const FString& InSkillName) {};
+	virtual void DoSkill(const int32& InIndex) {};
+
 	// Aiming이 필요한 애들은 이것을 재정의
 	virtual void OnAim() {}
 	virtual void OffAim() {}
+
+public:
+	UFUNCTION()
+		void RestoreRatio(); // 타이머로 OffsetRatio값 초기화
 
 protected:
 	virtual void BeginPlay() override;
@@ -59,7 +70,9 @@ protected:
 
 protected:
 	const bool* bEquipped;
+	bool bSkill; // 스킬 상태중인지
 
 	TArray<FDoActionData> Datas;
-
+	TArray<FDoSkillData> SkillDatas;
+	float OffsetRatio = 1.0f; // 공격속도 올리기 위해
 };

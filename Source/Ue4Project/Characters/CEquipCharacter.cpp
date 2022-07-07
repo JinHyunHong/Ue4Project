@@ -7,6 +7,8 @@
 #include "Components/CStateComponent.h"
 #include "Components/CStatusComponent.h"
 #include "Components/CMontagesComponent.h"
+#include "Materials/MaterialInstanceConstant.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 ACEquipCharacter::ACEquipCharacter()
 {
@@ -31,10 +33,6 @@ ACEquipCharacter::ACEquipCharacter()
 	CHelpers::CreateComponent<USkeletalMeshComponent>(this, &EqWeapon, "EqWeapon", GetMesh());
 
 	CHelpers::CreateActorComponent<UCEquipComponent>(this, &Equip, "Equip");
-	CHelpers::CreateActorComponent<UCActionComponent>(this, &Action, "Action");
-	CHelpers::CreateActorComponent<UCStateComponent>(this, &State, "State");
-	CHelpers::CreateActorComponent<UCStatusComponent>(this, &Status, "Status");
-	CHelpers::CreateActorComponent<UCMontagesComponent>(this, &Montages, "Montages");
 
 	// Bodies
 	BodyChest->ComponentTags.Add("Body");
@@ -90,7 +88,7 @@ ACEquipCharacter::ACEquipCharacter()
 	USkeletalMesh* mesh;
 	CHelpers::GetAsset<USkeletalMesh>(&mesh, "SkeletalMesh'/Game/Characters/Meshes/UCCS_Male/SK_UCCS_Male.SK_UCCS_Male'");
 	GetMesh()->SetSkeletalMesh(mesh);
-	EqWeapon->SetupAttachment(GetMesh(), "Hand_Sword");
+	EqWeapon->SetupAttachment(GetMesh(), "Right_Hand_Sword");
 }
 
 void ACEquipCharacter::OnConstruction(const FTransform& Transform)
@@ -102,15 +100,29 @@ void ACEquipCharacter::BeginPlay()
 {
 	SetCharacter(CharacterType);
 
-	// Mesh기준으로 Pose 변경
+	UMaterialInstanceConstant* bodyInst;
+
+	CHelpers::GetAssetDynamic(&bodyInst, "MaterialInstanceConstant'/Game/Characters/Materials/UCCS_Male/MI_Diffuse.MI_Diffuse'");
+
+	BodyMaterial = UMaterialInstanceDynamic::Create(bodyInst, this);
+
+	// Mesh기준으로 Pose 변경, SetMaterial
 	for (USkeletalMeshComponent* body : Bodies)
+	{
 		body->SetMasterPoseComponent(GetMesh(), true);
+		body->SetMaterial(0, BodyMaterial);
+	}
 
 	for (TPair<EEquipmentType, USkeletalMeshComponent*> equip : Equips)
 		equip.Value->SetMasterPoseComponent(GetMesh(), true);
 
 	// Head
 	Bodies.Add(GetMesh());
+
+	GetMesh()->SetMaterial(0, BodyMaterial);
+	GetMesh()->SetMaterial(2, BodyMaterial);
+	GetMesh()->SetMaterial(3, BodyMaterial);
+	GetMesh()->SetMaterial(4, BodyMaterial);
 
 	Super::BeginPlay();
 }
@@ -125,6 +137,13 @@ void ACEquipCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void ACEquipCharacter::ChangeColor_Implementation(FLinearColor InColor)
+{
+	Super::ChangeColor_Implementation(InColor);
+
+	BodyMaterial->SetVectorParameterValue("BodyColor", InColor);
 }
 
 void ACEquipCharacter::SetCharacter(const ECharacter& InType)

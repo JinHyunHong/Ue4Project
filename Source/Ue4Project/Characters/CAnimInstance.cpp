@@ -1,6 +1,8 @@
 #include "CAnimInstance.h"
 #include "Global.h"
 #include "GameFramework/Character.h"
+#include "Characters/CPlayer.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 void UCAnimInstance::NativeBeginPlay()
 {
@@ -25,10 +27,24 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Speed = character->GetVelocity().Size2D();
 	Direction = CalculateDirection(character->GetVelocity(), character->GetControlRotation());
 
+	IsInAir = character->GetMovementComponent()->IsFalling();
+	IsAccelerating = character->GetCharacterMovement()->GetCurrentAcceleration().Size2D() > 0;
 
 	FRotator rotation = TryGetPawnOwner()->GetBaseAimRotation();
 	Yaw = rotation.Yaw;
 	Pitch = rotation.Pitch;
+
+	UCIKComponent* ik = CHelpers::GetComponent<UCIKComponent>(character);
+	if (!!ik)
+	{
+		IKData = ik->GetData();
+		ACPlayer* player = Cast<ACPlayer>(character);
+		float distance = player->GetDeduceDistance();
+
+		// IK를 이용해서 FootSound Play
+		if (IKData.LeftFootDistance.X <= distance || IKData.RightFootDistance.X <= distance)
+			player->PlayFootstep();
+	}
 }
 
 void UCAnimInstance::OnActionTypeChanged(EActionType InPrevType, EActionType InNewType)

@@ -26,3 +26,10 @@ void ACDoAction::Tick(float DeltaTime)
 
 }
 
+void ACDoAction::RestoreRatio()
+{
+	OffsetRatio = 1.0f;
+}
+
+
+
