@@ -3,6 +3,7 @@
 #include "Characters/CAIController.h"
 #include "Characters/CEnemy_AI.h"
 #include "Components/CPatrolComponent.h"
+#include "Components/CStateComponent.h"
 
 
 UCBTTaskNode_Patrol::UCBTTaskNode_Patrol()
@@ -19,6 +20,12 @@ EBTNodeResult::Type UCBTTaskNode_Patrol::ExecuteTask(UBehaviorTreeComponent& Own
 	ACAIController* controller = Cast<ACAIController>(OwnerComp.GetOwner());
 	ACEnemy_AI* ai = Cast<ACEnemy_AI>(controller->GetPawn());
 	UCPatrolComponent* patrol = CHelpers::GetComponent<UCPatrolComponent>(ai);
+	
+	UCStateComponent* state = CHelpers::GetComponent<UCStateComponent>(ai);
+	CheckNullResult(state, EBTNodeResult::Failed);
+
+	// DeadMode라면 Patrol을 수행하지 않음
+	CheckTrueResult(state->IsDeadMode(), EBTNodeResult::Failed);
 
 	FVector location; // 어느 위치로 이동할건지
 	float acceptance; // 도달반경
@@ -37,12 +44,26 @@ void UCBTTaskNode_Patrol::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Nod
 
 	ACAIController* controller = Cast<ACAIController>(OwnerComp.GetOwner());
 	ACEnemy_AI* ai = Cast<ACEnemy_AI>(controller->GetPawn());
-	UCPatrolComponent* patrol = CHelpers::GetComponent<UCPatrolComponent>(ai);
+	UCPatrolComponent* patrol = CHelpers::GetComponent<UCPatrolComponent>(ai);;
 
 	FVector location; // 어느 위치로 이동할건지
 	float acceptance; // 도달반경
 
 	EPathFollowingRequestResult::Type type = EPathFollowingRequestResult::Failed;
+
+	UCStateComponent* state = CHelpers::GetComponent<UCStateComponent>(ai);
+	
+	if (state == NULL)
+	{
+		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+		return;
+	}
+
+	if (state->IsDeadMode())
+	{
+		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+		return;
+	}
 
 	if (patrol->GetMoveTo(location, acceptance)) type = controller->MoveToLocation(location, acceptance, false);
 	// MoveToLocation() : AI Controller를 해당 위치로 이동시키는 함수
