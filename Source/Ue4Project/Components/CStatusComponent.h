@@ -29,6 +29,7 @@ private:
 public:
 	FORCEINLINE float GetMaxHealth() { return MaxHealth; }
 	FORCEINLINE float GetHealth() { return Health; }
+	FORCEINLINE float GetHealthPercent() { return Health / MaxHealth; } // Max 1
 
 	FORCEINLINE float GetWalkSpeed() { return Speed[(int32)ECharacterSpeed::Walk]; }
 	FORCEINLINE float GetRunSpeed() { return Speed[(int32)ECharacterSpeed::Run]; }
@@ -57,5 +58,4 @@ private:
 	float Health;
 	// 이동 가능한지
 	bool bCanMove = true;
-
 };

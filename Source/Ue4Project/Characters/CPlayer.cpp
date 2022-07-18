@@ -13,6 +13,7 @@
 #include "Components/COptionComponent.h"
 #include "Components/CIKComponent.h"
 #include "Components/CTargetComponent.h"
+#include "Components/CParkourComponent.h"
 #include "Components/CEquipComponent.h"
 #include "Components/CInventoryComponent.h"	
 #include "Components/CapsuleComponent.h"
@@ -35,6 +36,7 @@ ACPlayer::ACPlayer()
 	CHelpers::CreateActorComponent<UCOptionComponent>(this, &Option, "Option");
 	CHelpers::CreateActorComponent<UCIKComponent>(this, &IK, "IK");
 	CHelpers::CreateActorComponent<UCTargetComponent>(this, &Target, "Target");
+	CHelpers::CreateActorComponent<UCParkourComponent>(this, &Parkour, "Parkour");
 	CHelpers::CreateActorComponent<UCInventoryComponent>(this, &Inventory, "Inventory");
 
 	// 사방을 뛰어다닐 수 있게(카메라의 회전에 따라 회전하지 않음)
@@ -69,8 +71,6 @@ void ACPlayer::BeginPlay()
 	Equip->OnUnequipChanged.AddDynamic(this, &ACPlayer::OnUnequipChanged);
 	
 	Status->SetSpeed(ECharacterSpeed::Walk);
-
-	Action->SetAction("Unarmed");
 
 	SkillList = CreateWidget<UCUserWidget_SkillList, APlayerController>(GetController<APlayerController>(), SkillListClass);
 	SkillList->AddToViewport();
@@ -108,7 +108,7 @@ void ACPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction("Avoid", EInputEvent::IE_Pressed, this, &ACPlayer::OnAvoid);
 	PlayerInputComponent->BindAction("ViewEquipment", EInputEvent::IE_Pressed, this, &ACPlayer::OnViewEquipmnent);
 	PlayerInputComponent->BindAction("ViewInventory", EInputEvent::IE_Pressed, this, &ACPlayer::OnViewInventory);
-	PlayerInputComponent->BindAction("PickUp", EInputEvent::IE_Pressed, this, &ACPlayer::OnPickUp);
+	PlayerInputComponent->BindAction("Interact", EInputEvent::IE_Pressed, this, &ACPlayer::OnInteract);
 
 	PlayerInputComponent->BindAction("Skill1", EInputEvent::IE_Pressed, this, &ACPlayer::OnDoSkill1);
 	PlayerInputComponent->BindAction("Skill2", EInputEvent::IE_Pressed, this, &ACPlayer::OnDoSkill2);
@@ -162,54 +162,67 @@ void ACPlayer::OnStateTypeChanged(EStateType InPrevType, EStateType InNewType)
 		case EStateType::Backstep: Begin_Backstep(); break;
 		case EStateType::Hitted: Hitted(); break;
 		case EStateType::Dead: Dead(); break;
+		case EStateType::Mantle1M: Mantle1M(); break;
+		case EStateType::Mantle15M: Mantle15M(); break;
+		case EStateType::Mantle2M: Mantle2M(); break;
 	}
 }
 
 void ACPlayer::OnEquipChanged(const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData)
 {
-	if (InEquipType == EEquipmentType::Weapon) 
-		Action->SetAction(InItemName);
+	if (InEquipType == EEquipmentType::Weapon)
+	{
+		Action->SetMode(InItemData.ActionType);
+
+		UCAction* action = Action->GetData();
+		CheckNull(action);
+		ACDoAction* doAction = action->GetDoAction();
+		CheckNull(doAction);
+
+		SkillList->ClearList();
+
+		for (FDoSkillData& data : doAction->GetSkillDatas())
+			SkillList->AddSkill(data.SkillName.ToString(), data.SumNail, data.MaxCoolTime);
+	}
 
 	// Add Equipment Data
 	Inventory->AddEquip(CharacterType, InEquipType, InItemName, InItemData);
-	
-	UCAction* action = Action->GetData();
-	CheckNull(action);
-	ACDoAction* doAction = action->GetDoAction();
-	CheckNull(doAction);
-
-	for (FDoSkillData& data : doAction->GetSkillDatas())
-		SkillList->AddSkill(data.SkillName.ToString(), data.SumNail, data.MaxCoolTime);
 }
 
 void ACPlayer::OnUnequipChanged(const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData)
 {
 	if (InEquipType == EEquipmentType::Weapon)
-		Action->SetAction("Unarmed");
+	{
+		SkillList->ClearList();	
+		Action->SetUnarmedMode();
+	}
 
 	// Add Inventory Data
 	Inventory->AddItem(CharacterType, InEquipType, InItemName, InItemData);
 	
-	SkillList->ClearList();
 }
 
 void ACPlayer::OnRun()
 {
 	if (GetCharacterMovement()->IsFalling())
 	{
-		AirDash ? AirDash->Activate() : AirDash = NULL;
-
 		ACharacter* enemy = Target->GetTarget();
 		CheckNull(enemy);
 
+		AirDash ? AirDash->Activate() : AirDash = NULL;
+
 		// 공중 중에 적 주위에서 랜덤으로 이동함
 		FVector location = enemy->GetActorLocation();
-		location.X = UKismetMathLibrary::RandomFloatInRange(location.X - RandomAirX, location.X + RandomAirX);
-		location.Y = UKismetMathLibrary::RandomFloatInRange(location.Y - RandomAirY, location.Y + RandomAirY);
+		location.X = UKismetMathLibrary::RandomFloatInRange(location.X - RandomAir.X, location.X + RandomAir.X);
+		location.Y = UKismetMathLibrary::RandomFloatInRange(location.Y - RandomAir.Y, location.Y + RandomAir.Y);
+		// Z 높이 같은 경우에는 최소한 땅으로 떨어져야 함
+		location.Z = UKismetMathLibrary::RandomFloatInRange(location.Z - RandomAir.Z / 2.0f, location.Z - RandomAir.Z);
 		SetActorLocation(location);
 
-		return;
+		// Dilation을 줘서 이동감을 준다.
+		UGameplayStatics::SetGlobalTimeDilation(GetWorld(), MoveDilation);
 
+		return;
 	}
 
 	Status->SetSpeed(ECharacterSpeed::Run);
@@ -220,6 +233,9 @@ void ACPlayer::OffRun()
 	if (AirDash)
 	{
 		AirDash->Deactivate();
+
+		UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
+
 		return;
 	}
 
@@ -230,7 +246,8 @@ void ACPlayer::OnAvoid()
 {
 	CheckTrue(GetCharacterMovement()->IsFalling());
 	CheckFalse(Status->CanMove());
-	CheckFalse(State->IsIdleMode());
+
+	CheckTrue(OnMantling());
 
 	if (InputComponent->GetAxisValue("MoveForward") < 0.0f)
 	{
@@ -243,6 +260,40 @@ void ACPlayer::OnAvoid()
 }
 
 
+bool ACPlayer::OnMantling()
+{
+	switch (Parkour->Mantling())
+	{
+	case EMantleType::None: return false;
+	case EMantleType::Mantle1M: State->SetMantle1MMode(); return true;
+	case EMantleType::Mantle15M: State->SetMantle15MMode(); return true;
+	case EMantleType::Mantle2M: State->SetMantle2MMode(); return true;
+	}
+
+	return false;
+}
+
+void ACPlayer::Mantle1M()
+{
+	CheckFalse(State->IsMantle1M());
+	Montages->PlayMantle1M();
+	Parkour->BeginMantle();
+}
+
+void ACPlayer::Mantle15M()
+{
+	CheckFalse(State->IsMantle15M());
+	Montages->PlayMantle15M();
+	Parkour->BeginMantle();
+}
+
+void ACPlayer::Mantle2M()
+{
+	CheckFalse(State->IsMantle2M());
+	Montages->PlayMantle2M();
+	Parkour->BeginMantle();
+}
+
 void ACPlayer::OnViewEquipmnent()
 {
 	Inventory->ViewEquipment();
@@ -253,17 +304,21 @@ void ACPlayer::OnViewInventory()
 	Inventory->ViewInventory();
 }
 
-void ACPlayer::OnPickUp()
+void ACPlayer::OnInteract()
 {
 	CheckNull(InteractItem);
-
+	
 	ACItem* item = Cast<ACItem>(InteractItem);
-	CheckNull(item);
+	
+	if (!!item)
+	{
+		Inventory->AddItem(item->GetCharacterType(), item->GetEquipmentType(), item->GetItemName(), item->GetItemData(), true);
 
-	Inventory->AddItem(item->GetCharacterType(), item->GetEquipmentType(), item->GetItemName(), item->GetItemData(), true);
+		InteractItem->Destroy();
+		InteractItem = NULL;
 
-	InteractItem->Destroy();
-	InteractItem = NULL;
+		return;
+	}
 }
 
 void ACPlayer::OnDoAction()
@@ -285,6 +340,13 @@ void ACPlayer::OnAir()
 
 	ACharacter* enemy = Target->GetTarget();
 	CheckNull(enemy);
+
+	// enemy와의 거리가 TargetDistance 보다 크다면 제외
+	if (GetDistanceTo(enemy) > TargetDistance)
+	{
+		Target->EndTargeting(); 
+		return;
+	}
 
 	// Player를 공중에 띄움
 	LaunchCharacter(GetActorUpVector() * 1000.0f, true, true);
@@ -316,6 +378,7 @@ void ACPlayer::AirFalling()
 void ACPlayer::OnDoSkill1()
 {
 	CheckTrue(State->IsActionMode());
+	CheckTrue(State->IsHittedMode());
 
 	UCUserWidget_SkillSlot* slot = SkillList->GetSlot(0);
 	CheckNull(slot);
@@ -329,6 +392,7 @@ void ACPlayer::OnDoSkill1()
 void ACPlayer::OnDoSkill2()
 {
 	CheckTrue(State->IsActionMode());
+	CheckTrue(State->IsHittedMode());
 
 	UCUserWidget_SkillSlot* slot = SkillList->GetSlot(1);
 	CheckNull(slot);
@@ -342,6 +406,7 @@ void ACPlayer::OnDoSkill2()
 void ACPlayer::OnDoSkill3()
 {
 	CheckTrue(State->IsActionMode());
+	CheckTrue(State->IsHittedMode());
 
 	UCUserWidget_SkillSlot* slot = SkillList->GetSlot(2);
 	CheckNull(slot);
@@ -355,6 +420,7 @@ void ACPlayer::OnDoSkill3()
 void ACPlayer::OnDoSkill4()
 {
 	CheckTrue(State->IsActionMode());
+	CheckTrue(State->IsHittedMode());
 
 	UCUserWidget_SkillSlot* slot = SkillList->GetSlot(3);
 	CheckNull(slot);
@@ -435,6 +501,7 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 
 void ACPlayer::Hitted()
 {
+	CLog::Print("Hitted");
 	Status->SubHealth(DamageValue);
 	DamageValue = 0.0f;
 
@@ -464,6 +531,8 @@ void ACPlayer::Begin_Dead()
 
 void ACPlayer::End_Dead()
 {
+	// Dead 애니메이션이 끝나면 게임을 종료
+	UKismetSystemLibrary::QuitGame(GetWorld(), GetController<APlayerController>(), EQuitPreference::Quit, false);
 }
 
 void ACPlayer::PlayFootstep()

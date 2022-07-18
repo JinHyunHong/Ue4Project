@@ -21,6 +21,10 @@ void ACAttachment::BeginPlay()
 		component->OnComponentBeginOverlap.AddDynamic(this, &ACAttachment::OnComponentBeginOverlap);
 		component->OnComponentEndOverlap.AddDynamic(this, &ACAttachment::OnComponentEndOverlap);
 	}
+	
+	// 기본공격, 스킬 Collision 설정
+	OnAddActionCollision();
+	OnAddSkillCollision();
 
 	OffCollision();
 
@@ -51,14 +55,42 @@ void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompon
 	CheckTrue(OwnerCharacter == OtherActor);
 	CheckTrue(OtherActor->GetClass() == OwnerCharacter->GetClass());
 
+	ACharacter* other = Cast<ACharacter>(OtherActor);
+	CheckNull(other);
+
 	if (OnAttachmentBeginOverlap.IsBound())
-		OnAttachmentBeginOverlap.Broadcast(OwnerCharacter, this, Cast<ACharacter>(OtherActor));
+		OnAttachmentBeginOverlap.Broadcast(OwnerCharacter, this, other);
 }
 
 void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	CheckTrue(OwnerCharacter == OtherActor);
+	CheckTrue(OtherActor->GetClass() == OwnerCharacter->GetClass());
+
+	ACharacter* other = Cast<ACharacter>(OtherActor);
+	CheckNull(other);
+
 	if (OnAttachmentEndOverlap.IsBound())
-		OnAttachmentEndOverlap.Broadcast(OwnerCharacter, this, Cast<ACharacter>(OtherActor));
+		OnAttachmentEndOverlap.Broadcast(OwnerCharacter, this, other);
+}
+
+void ACAttachment::OnActionCollision()
+{
+	for (UShapeComponent* component : ActionComponents)
+		component->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	if (OnAttachmentCollision.IsBound())
+		OnAttachmentCollision.Broadcast();
+}
+
+void ACAttachment::OnSkillCollision(const int32& InIndex)
+{
+	CheckFalse(SkillComponents.Num() > InIndex);
+
+	SkillComponents[InIndex]->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	if (OnAttachmentCollision.IsBound())
+		OnAttachmentCollision.Broadcast();
 }
 
 void ACAttachment::OnCollision()

@@ -27,10 +27,13 @@ protected:
 		class UNiagaraSystem* AirDashEffect;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AirRun")
-		float RandomAirX = 150.0f; // 공중에서 이동 할 랜덤 값
+		FVector RandomAir = FVector(150.0f, 150.0f, 30.0f); // 공중에서 이동 할 랜덤 값
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AirRun")
-		float RandomAirY = 150.0f;
+		float MoveDilation = 0.5f; // Air 이동시 DilationAmount
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AirRun")
+		float TargetDistance = 300.0f; // Air Target과의 거리 기준(거리 안에 있는 타겟만 Air 처리가능) 
 
 private:
 	// TeamID가 적이랑 다르면 적군이 된다.
@@ -46,6 +49,9 @@ private:
 
 	UPROPERTY(VisibleDefaultsOnly)
 		class UCTargetComponent* Target;
+
+	UPROPERTY(VisibleDefaultsOnly)
+		class UCParkourComponent* Parkour;
 
 
 protected:
@@ -102,11 +108,18 @@ private:
 	void OnRun();
 	void OffRun();
 	void OnAvoid();
-	void OnViewEquipmnent();
-	void OnViewInventory();
-	void OnPickUp();
 
 private:
+	bool OnMantling();
+	void Mantle1M();
+	void Mantle15M();
+	void Mantle2M();
+
+private:
+	void OnViewEquipmnent();
+	void OnViewInventory();
+	void OnInteract();
+
 	void OnDoAction();
 	void OnAir();
 

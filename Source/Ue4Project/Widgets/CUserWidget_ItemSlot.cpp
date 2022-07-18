@@ -24,6 +24,7 @@ void UCUserWidget_ItemSlot::NativeOnInitialized()
 {
 	ToolTip = CreateWidget<UCUserWidget_ToolTip, APlayerController>(GetOwningPlayer(), ToolTipClass);
 	ToolTip->SetVisibility(ESlateVisibility::Collapsed);
+	ToolTip->AddToViewport(10);
 
 	Super::NativeOnInitialized();
 }
@@ -31,15 +32,13 @@ void UCUserWidget_ItemSlot::NativeOnInitialized()
 FReply UCUserWidget_ItemSlot::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	CheckEmptyResult(ItemName, FReply::Unhandled());
-	CheckEmptyResult(ItemData.Desc, FReply::Unhandled());
+	CheckNullResult(ItemData.Mesh, FReply::Unhandled());
 	CheckNullResult(ToolTip, FReply::Unhandled());
 
 	Super::NativeOnMouseMove(InGeometry, InMouseEvent);
 
 	if (bEnter)
 	{
-		if (ToolTip->IsInViewport() == false) ToolTip->AddToViewport(0);
-
 		FVector2D mousePos = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetWorld());
 		float scale = UWidgetLayoutLibrary::GetViewportScale(this->GetWorld());
 		mousePos *= scale;
@@ -57,7 +56,7 @@ void UCUserWidget_ItemSlot::NativeOnMouseEnter(const FGeometry& InGeometry, cons
 	bEnter = true;
 
 	CheckEmpty(ItemName);
-	CheckEmpty(ItemData.Desc);
+	CheckNull(ItemData.Mesh);
 
 	CheckNull(ToolTip);
 	CheckTrue(ToolTip->GetVisibility() == ESlateVisibility::HitTestInvisible);
@@ -71,7 +70,7 @@ void UCUserWidget_ItemSlot::NativeOnMouseLeave(const FPointerEvent& InMouseEvent
 	bEnter = false;
 
 	CheckEmpty(ItemName);
-	CheckEmpty(ItemData.Desc);
+	CheckNull(ItemData.Mesh);
 
 	CheckNull(ToolTip);
 	CheckTrue(ToolTip->GetVisibility() == ESlateVisibility::Collapsed);
@@ -81,7 +80,7 @@ void UCUserWidget_ItemSlot::NativeOnMouseLeave(const FPointerEvent& InMouseEvent
 FReply UCUserWidget_ItemSlot::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	CheckEmptyResult(ItemName, FReply::Unhandled());
-	CheckNullResult(ItemData.SumNail, FReply::Unhandled());
+	CheckNullResult(ItemData.Mesh, FReply::Unhandled());
 	CheckNullResult(ToolTip, FReply::Unhandled());
 
 	CheckFalseResult(InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton), FReply::Unhandled());
@@ -106,7 +105,6 @@ void UCUserWidget_ItemSlot::SetAmount(const int32& InAmount)
 void UCUserWidget_ItemSlot::Update(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData)
 {
 	CheckEmpty(InItemName);
-	CheckEmpty(InItemData.Desc);
 
 	CharacterType = InCharacterType;
 	EquipType = InEquipType;

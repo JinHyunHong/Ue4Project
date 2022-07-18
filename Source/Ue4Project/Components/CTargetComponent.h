@@ -57,6 +57,11 @@ private:
 	void ChangeCursor(class ACharacter* InTarget);
 
 public:
+	// 커서의 활성화 여부
+	void ActiveCursor();
+	void DeactiveCursor();
+
+public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:

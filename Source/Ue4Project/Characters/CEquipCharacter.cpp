@@ -3,7 +3,6 @@
 #include "Kismet/DataTableFunctionLibrary.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Components/CEquipComponent.h"
-#include "Components/CActionComponent.h"
 #include "Components/CStateComponent.h"
 #include "Components/CStatusComponent.h"
 #include "Components/CMontagesComponent.h"
@@ -30,7 +29,8 @@ ACEquipCharacter::ACEquipCharacter()
 	CHelpers::CreateComponent<USkeletalMeshComponent>(this, &EqBoots, "EqBoots", GetMesh());
 	CHelpers::CreateComponent<USkeletalMeshComponent>(this, &EqLeftBracer, "EqLeftBracer", GetMesh());
 	CHelpers::CreateComponent<USkeletalMeshComponent>(this, &EqRightBracer, "EqRightBracer", GetMesh());
-	CHelpers::CreateComponent<USkeletalMeshComponent>(this, &EqWeapon, "EqWeapon", GetMesh());
+	CHelpers::CreateComponent<USkeletalMeshComponent>(this, &EqRightWeapon, "EqRightWeapon", GetMesh());
+	CHelpers::CreateComponent<USkeletalMeshComponent>(this, &EqLeftWeapon, "EqLeftWeapon", GetMesh());
 
 	CHelpers::CreateActorComponent<UCEquipComponent>(this, &Equip, "Equip");
 
@@ -42,17 +42,18 @@ ACEquipCharacter::ACEquipCharacter()
 	BodyFeet->ComponentTags.Add("Body");
 
 	// Equip
-	Equips.Add(EEquipmentType::Chest, EqChest);
-	Equips.Add(EEquipmentType::Pants, EqPants);
-	Equips.Add(EEquipmentType::Boots, EqBoots);
-	Equips.Add(EEquipmentType::Helmet, EqHelmet);
-	Equips.Add(EEquipmentType::LeftBracer, EqLeftBracer);
-	Equips.Add(EEquipmentType::RightBracer, EqRightBracer);
-	Equips.Add(EEquipmentType::Cloak, EqCloak);
-	Equips.Add(EEquipmentType::Gloves, EqGloves);
-	Equips.Add(EEquipmentType::Robes, EqRobe);
-	Equips.Add(EEquipmentType::Shoulders, EqShoulders);
-	Equips.Add(EEquipmentType::Weapon, EqWeapon);
+	Equips[(int32)EEquipmentType::Chest] = EqChest;
+	Equips[(int32)EEquipmentType::Pants] = EqPants;
+	Equips[(int32)EEquipmentType::Boots] = EqBoots;
+	Equips[(int32)EEquipmentType::Helmet] = EqHelmet;
+	Equips[(int32)EEquipmentType::LeftBracer] = EqLeftBracer;
+	Equips[(int32)EEquipmentType::RightBracer] = EqRightBracer;
+	Equips[(int32)EEquipmentType::Cloak] = EqCloak;
+	Equips[(int32)EEquipmentType::Gloves] = EqGloves;
+	Equips[(int32)EEquipmentType::Robes] = EqRobe;
+	Equips[(int32)EEquipmentType::Shoulders] = EqShoulders;
+	Equips[(int32)EEquipmentType::Weapon] = EqRightWeapon;
+	Equips[(int32)EEquipmentType::Weapon + 1] = EqLeftWeapon;
 
 	// SetClothingSimulationFactory
 	FString path = "Class'/Script/ClothingSystemRuntimeNv.ClothingSimulationFactoryNv'";
@@ -73,9 +74,9 @@ ACEquipCharacter::ACEquipCharacter()
 		}
 	}
 
-	for (TPair<EEquipmentType, USkeletalMeshComponent*> equip : Equips)
+	for (int i = 0; i < (int32)EEquipmentType::Max + 1; i++)
 	{
-		CHelpers::GetClass<UClothingSimulationFactory>(&equip.Value->ClothingSimulationFactory, path);
+		if(!!Equips[i]) CHelpers::GetClass<UClothingSimulationFactory>(&Equips[i]->ClothingSimulationFactory, path);
 	}
 
 	bUseControllerRotationYaw = false;
@@ -83,12 +84,12 @@ ACEquipCharacter::ACEquipCharacter()
 	GetMesh()->SetRelativeLocation(FVector(0, 0, -90));
 	GetMesh()->SetRelativeRotation(FRotator(0, -90, 0));
 
-
 	// EqWeapon Set Socket
 	USkeletalMesh* mesh;
 	CHelpers::GetAsset<USkeletalMesh>(&mesh, "SkeletalMesh'/Game/Characters/Meshes/UCCS_Male/SK_UCCS_Male.SK_UCCS_Male'");
 	GetMesh()->SetSkeletalMesh(mesh);
-	EqWeapon->SetupAttachment(GetMesh(), "Right_Hand_Sword");
+	EqLeftWeapon->SetupAttachment(GetMesh(), "Left_Hand");
+	EqRightWeapon->SetupAttachment(GetMesh(), "Right_Hand");
 }
 
 void ACEquipCharacter::OnConstruction(const FTransform& Transform)
@@ -113,8 +114,10 @@ void ACEquipCharacter::BeginPlay()
 		body->SetMaterial(0, BodyMaterial);
 	}
 
-	for (TPair<EEquipmentType, USkeletalMeshComponent*> equip : Equips)
-		equip.Value->SetMasterPoseComponent(GetMesh(), true);
+	for (int i = 0; i < (int32)EEquipmentType::Max + 1; i++)
+	{
+		if (!!Equips[i]) Equips[i]->SetMasterPoseComponent(GetMesh(), true);
+	}
 
 	// Head
 	Bodies.Add(GetMesh());
@@ -199,7 +202,7 @@ void ACEquipCharacter::SetPartMesh()
 
 USkeletalMeshComponent* ACEquipCharacter::GetEquipMesh(const EEquipmentType& InEquipType)
 {
-	USkeletalMeshComponent* mesh = Equips[InEquipType];
+	USkeletalMeshComponent* mesh = Equips[(int32)InEquipType];
 	CheckNullResult(mesh, NULL);
 
 	return mesh;

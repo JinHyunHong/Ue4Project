@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Components/CActionComponent.h"
 #include "Characters/CActionCharacter.h"
 #include "Engine/DataTable.h"
 #include "CEquipCharacter.generated.h"
@@ -122,7 +123,10 @@ public:
 		UDataTable* RobesTable;
 
 	UPROPERTY(EditAnywhere)
-		UDataTable* BracersTable;
+		UDataTable* LeftBracerTable;
+
+	UPROPERTY(EditAnywhere)
+		UDataTable* RightBracerTable;
 
 	UPROPERTY(EditAnywhere)
 		UDataTable* GlovesTable;
@@ -144,7 +148,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FItem
+struct FItem : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -172,6 +176,12 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere)
+		EActionType ActionType;
+
+	UPROPERTY(EditAnywhere)
+		bool bTwoHand; // 양손 착용 무기인지
+
+	UPROPERTY(EditAnywhere)
 		float MinPower;
 
 	UPROPERTY(EditAnywhere)
@@ -188,73 +198,53 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FEquipment_Bracer : public FTableRowBase
+struct FEquipment_Bracer : public FItem
 {
 	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-		FItem Item;
 };
 
 USTRUCT(BlueprintType)
-struct FEquipment_Cloak : public FTableRowBase
+struct FEquipment_Cloak : public FItem
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere)
 		CloakType Type;
-
-	UPROPERTY(EditAnywhere)
-		FItem Item;
 };
 
 USTRUCT(BlueprintType)
-struct FEquipment_Gloves : public FTableRowBase
+struct FEquipment_Gloves : public FItem
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere)
 		GlovesType Type;
-
-	UPROPERTY(EditAnywhere)
-		FItem Item;
 };
 
 USTRUCT(BlueprintType)
-struct FEquipment_Robe : public FTableRowBase
+struct FEquipment_Robe : public FItem
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere)
 		RobeType Type;
-
-	UPROPERTY(EditAnywhere)
-		FItem Item;
 };
 
 USTRUCT(BlueprintType)
-struct FEquipment_Shoulders : public FTableRowBase
+struct FEquipment_Shoulders : public FItem
+{
+	GENERATED_BODY()
+};
+
+USTRUCT(BlueprintType)
+struct FEquipment_Boots : public FItem
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere)
-		FItem Item;
-};
-
-USTRUCT(BlueprintType)
-struct FEquipment_Boots : public FTableRowBase
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-		FItem Item;
-
 	UPROPERTY(EditAnywhere)
 		BootsType Type;
 
@@ -263,14 +253,11 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FEquipment_Chest : public FTableRowBase
+struct FEquipment_Chest : public FItem
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere)
-		FItem Item;
-
 	UPROPERTY(EditAnywhere)
 		ChestType ChestType;
 
@@ -279,51 +266,26 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FEquipment_Helmet : public FTableRowBase
+struct FEquipment_Helmet : public FItem
 {
 	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-		FItem Item;
 };
 
 USTRUCT(BlueprintType)
-struct FEquipment_Pants : public FTableRowBase
+struct FEquipment_Pants : public FItem
 {
 	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-		FItem Item;
 };
 
 USTRUCT(BlueprintType)
-struct FBracersPair : public FTableRowBase
+struct FEquipment_Weapon : public FItem
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere)
-		FEquipment_Bracer Left;
-
-	UPROPERTY(EditAnywhere)
-		FEquipment_Bracer Right;
-};
-
-USTRUCT(BlueprintType)
-struct FEquipment_Weapon : public FTableRowBase
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-		FItem Item;
-
 	UPROPERTY(EditAnywhere)
 		WeaponType Type;
 };
-
 
 UCLASS()
 class UE4PROJECT_API ACEquipCharacter : public ACActionCharacter
@@ -392,7 +354,10 @@ protected:
 		class USkeletalMeshComponent* EqRightBracer;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
-		class USkeletalMeshComponent* EqWeapon; // Only Preview
+		class USkeletalMeshComponent* EqLeftWeapon; // Only Preview
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+		class USkeletalMeshComponent* EqRightWeapon; // Only Preview
 
 public:
 	FORCEINLINE const ECharacter* GetCharacterType() { return &CharacterType; }
@@ -432,7 +397,7 @@ public:
 
 protected:
 	TArray<USkeletalMeshComponent*> Bodies;
-	TMap<EEquipmentType, USkeletalMeshComponent*> Equips;
+	USkeletalMeshComponent* Equips[(int32)EEquipmentType::Max + 1]; // Weapon -> RightWeapon, Weapon + 1 -> LeftWeapon
 
 protected:
 	FCharacterMesh CharacterInfo;

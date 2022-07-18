@@ -45,14 +45,26 @@ void UCStateComponent::SetDeadMode()
 	ChangeType(EStateType::Dead);
 }
 
-void UCStateComponent::SetPickUpMode()
+void UCStateComponent::SetMantle1MMode()
 {
-	ChangeType(EStateType::PickUp);
+	ChangeType(EStateType::Mantle1M);
 }
 
+void UCStateComponent::SetMantle15MMode()
+{
+	ChangeType(EStateType::Mantle15M);
+}
+
+void UCStateComponent::SetMantle2MMode()
+{
+	ChangeType(EStateType::Mantle2M);
+}
 
 void UCStateComponent::ChangeType(EStateType InType)
 {
+	// 같은 타입의 경우 여러번 바뀌지 않도록
+	CheckTrue(Type == InType)
+
 	EStateType type = Type;
 	Type = InType;
 

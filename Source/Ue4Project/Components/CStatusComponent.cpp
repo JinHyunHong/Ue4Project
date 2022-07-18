@@ -39,7 +39,7 @@ void UCStatusComponent::SubHealth(float InAmount)
 
 void UCStatusComponent::SetSpeed(ECharacterSpeed InType)
 {
-	UCharacterMovementComponent* movment = CHelpers::GetComponent<UCharacterMovementComponent>(GetOwner());
+	UCharacterMovementComponent* movement = CHelpers::GetComponent<UCharacterMovementComponent>(GetOwner());
 
-	movment->MaxWalkSpeed = Speed[(int32)InType];
+	movement->MaxWalkSpeed = Speed[(int32)InType];
 }

@@ -23,9 +23,8 @@ void UCAnimNotify_EndAction::Notify(USkeletalMeshComponent* MeshComp, UAnimSeque
 	CheckNull(actionData);
 
 	ACDoAction* doAction = actionData->GetDoAction();
-	CheckNull(doAction);
-
-	doAction->End_DoAction();
+	
+	if (!!doAction) doAction->End_Action();
 }
 
 

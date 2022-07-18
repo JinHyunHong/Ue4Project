@@ -2,10 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotifyState.h"
-#include "CAnimNotifyState_Collision.generated.h"
+#include "CAnimNotifyState_Unequip.generated.h"
 
 UCLASS()
-class UE4PROJECT_API UCAnimNotifyState_Collision : public UAnimNotifyState
+class UE4PROJECT_API UCAnimNotifyState_Unequip : public UAnimNotifyState
 {
 	GENERATED_BODY()
 
@@ -15,4 +15,3 @@ public:
 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration) override;
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) override;
 };
-

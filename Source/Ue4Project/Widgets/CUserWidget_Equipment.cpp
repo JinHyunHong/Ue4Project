@@ -55,7 +55,6 @@ void UCUserWidget_Equipment::OnExitPress()
 }
 
 
-
 void UCUserWidget_Equipment::AddEquip(const ECharacter& InCharacterType, const EEquipmentType& InEquipType, const FString& InItemName, const FItem& InItemData)
 {
 	UCUserWidget_EquipSlot* slot = Datas[InEquipType];

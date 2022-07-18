@@ -113,6 +113,9 @@ public:
 		FEquipmentData EquipmentData;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+		FEquipmentData UnequipmentData;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 		TSubclassOf<class ACDoAction> DoActionClass;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
@@ -132,14 +135,19 @@ public:
 	friend class UCActionComponent;
 
 public:
-	FORCEINLINE FName GetItemName() { return ItemName; }
+	UCAction();
+
+	void DestoryAction();
+
+public:
+	FORCEINLINE FName GetActionName() { return ActionName; }
 	FORCEINLINE EActionType GetActionType() { return Type; }
 	FORCEINLINE class ACEquipment* GetEquipment() { return Equipment; }
 	FORCEINLINE class ACDoAction* GetDoAction() { return DoAction; }
 	FORCEINLINE class ACAttachment* GetAttachment() { return Attachment; }
 
 private:
-	FName ItemName;
+	FName ActionName;
 	EActionType Type;
 	class ACEquipment* Equipment;
 	class ACAttachment* Attachment;

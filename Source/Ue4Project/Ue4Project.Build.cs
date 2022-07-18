@@ -8,7 +8,7 @@ public class Ue4Project : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "ClothingSystemRuntimeInterface", "UMG", "SlateCore", "AIModule", "Niagara" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "ClothingSystemRuntimeInterface", "UMG", "SlateCore", "AIModule", "Niagara", "GameplayTasks" });
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
 		PublicIncludePaths.Add(ModuleDirectory);

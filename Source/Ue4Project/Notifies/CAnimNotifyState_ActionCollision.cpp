@@ -1,15 +1,15 @@
-#include "CAnimNotifyState_Collision.h"
+#include "CAnimNotifyState_ActionCollision.h"
 #include "Global.h"
 #include "Actions/CAction.h"
 #include "Actions/CAttachment.h"
 #include "Components/CActionComponent.h"
 
-FString UCAnimNotifyState_Collision::GetNotifyName_Implementation() const
+FString UCAnimNotifyState_ActionCollision::GetNotifyName_Implementation() const
 {
-	return "Collision";
+	return "ActionCollision";
 }
 
-void UCAnimNotifyState_Collision::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration)
+void UCAnimNotifyState_ActionCollision::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration)
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration);
 	CheckNull(MeshComp);
@@ -21,10 +21,10 @@ void UCAnimNotifyState_Collision::NotifyBegin(USkeletalMeshComponent* MeshComp, 
 	ACAttachment* attachment = action->GetData()->GetAttachment();
 	CheckNull(attachment);
 
-	attachment->OnCollision();
+	attachment->OnActionCollision();
 }
 
-void UCAnimNotifyState_Collision::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
+void UCAnimNotifyState_ActionCollision::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
 	Super::NotifyEnd(MeshComp, Animation);
 	CheckNull(MeshComp);

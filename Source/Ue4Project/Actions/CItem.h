@@ -26,6 +26,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Widget")
 		TSubclassOf<class UCUserWidget_PickMessage> PickMessageClass;
 
+	UPROPERTY(EditAnywhere, Category = "Item")
+		bool bRandom; // ∑£¥˝ æ∆¿Ã≈€
+
 protected:
 	UPROPERTY(VisibleDefaultsOnly)
 		class USceneComponent* Scene;
@@ -55,14 +58,20 @@ protected:
 	UFUNCTION()
 		void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+public:
+	void SetItem();
+
 private:
-	bool FindItemData(FItem& OutItemData);
+	void FindItemData();
 
 public:
 	FORCEINLINE const ECharacter& GetCharacterType() { return CharacterType; }
 	FORCEINLINE const EEquipmentType& GetEquipmentType() { return EquipType; }
 	FORCEINLINE const FString& GetItemName() { return ItemName; }
 	FORCEINLINE const FItem& GetItemData() { return ItemData; }
+
+public:
+	FORCEINLINE void SetRandomItem(bool InRandom) { bRandom = InRandom; }
 
 private:
 	FItem ItemData;

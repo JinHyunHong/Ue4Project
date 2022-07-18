@@ -39,6 +39,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Hitted")
 		float AirLaunchAmount = 200.0f;
 
+	UPROPERTY(EditAnywhere, Category = "Angry")
+		FLinearColor AngryColor = FLinearColor(0.5f, 0.0f, 0.0f, 1.0f); // 화난 상태의 색상
+
 
 protected:
 	UPROPERTY(VisibleDefaultsOnly)
@@ -74,7 +77,6 @@ private:
 	UFUNCTION()
 		void OnStateTypeChanged(EStateType InPrevType, EStateType InNewType);
 
-
 private:
 	void Hitted();
 	void Dead();
@@ -82,6 +84,11 @@ private:
 public:
 	UFUNCTION()
 		void FinishDead();
+
+public:
+	FORCEINLINE bool IsBoss() { return bBoss; }
+	FORCEINLINE FLinearColor& GetAngryColor() { return AngryColor; }
+
 
 private:
 	class UMaterialInstanceDynamic* BodyMaterial;

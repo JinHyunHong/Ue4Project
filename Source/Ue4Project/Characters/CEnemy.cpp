@@ -1,12 +1,14 @@
 #include "Characters/CEnemy.h"
 #include "Global.h"
 #include "Actions/CAction.h"
+#include "Actions/CItem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/CActionComponent.h"
 #include "Components/CMontagesComponent.h"
+#include "Components/CTargetComponent.h"
 #include "Components/CStatusComponent.h"
 #include "Materials/MaterialInstanceConstant.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -54,11 +56,11 @@ ACEnemy::ACEnemy()
 
 void ACEnemy::BeginPlay()
 {
+	Super::BeginPlay();
+
 	SetBodyMaterial();
 
 	State->OnStateTypeChanged.AddDynamic(this, &ACEnemy::OnStateTypeChanged);
-
-	Super::BeginPlay();
 
 	if (bBoss)
 	{
@@ -83,7 +85,6 @@ void ACEnemy::BeginPlay()
 void ACEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ACEnemy::OnStateTypeChanged(EStateType InPrevType, EStateType InNewType)
@@ -98,6 +99,8 @@ void ACEnemy::OnStateTypeChanged(EStateType InPrevType, EStateType InNewType)
 
 float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
+	CheckTrueResult(State->IsDeadMode(), 0.0f);
+
 	DamageInstigator = EventInstigator;
 	DamageValue = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
@@ -118,14 +121,6 @@ void ACEnemy::Hitted()
 
 	Status->SetStop();
 
-
-	if (Status->GetHealth() <= 0.0f)
-	{
-		State->SetDeadMode();
-
-		return;
-	}
-
 	FTransform transform;
 	FVector start;
 	FVector target;
@@ -137,6 +132,19 @@ void ACEnemy::Hitted()
 	CheckNull(action);
 
 	ACAttachment* attachment = Cast<ACAttachment>(action->GetData()->GetAttachment());
+
+	if (Status->GetHealth() <= 0.0f)
+	{
+		State->SetDeadMode();
+
+		// Dead일 경우 EndTargeting
+		UCTargetComponent* targeting = CHelpers::GetComponent<UCTargetComponent>(enemy);
+		CheckNull(targeting);
+
+		targeting->EndTargeting();
+
+		return;
+	}
 
 	if (attachment)
 	{
@@ -177,12 +185,12 @@ void ACEnemy::Dead()
 {
 	CheckFalse(State->IsDeadMode());
 
+	Action->OffAllCollision();
 	Montages->PlayDead();
 }
 
 void ACEnemy::Begin_Dead()
 {
-	Action->OffAllCollision();
 	Action->DestroyAllActions();
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -204,7 +212,26 @@ void ACEnemy::FinishDead()
 {
 	if (GetCurrentMontage() == NULL)
 	{
-		Destroy();
+		// 아이템을 Drop시킴
+		FTransform transform;
+		FVector location = GetActorLocation();
+		transform.SetLocation(FVector(location.X, location.Y, location.Z - GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 20.0f));
+
+		ACItem* item = GetWorld()->SpawnActorDeferred<ACItem>(ACItem::StaticClass(), transform);
+
+		FString str = "Drop";
+		str.Append("_");
+		str.Append(item->GetActorLabel());
+		item->SetActorLabel(str);
+
+		// RandomItem 생성
+		item->SetRandomItem(true);
+		item->SetItem();
+
 		UKismetSystemLibrary::K2_ClearTimer(this, "FinishDead");
+		
+		Destroy();
+
+		UGameplayStatics::FinishSpawningActor(item, transform);
 	}
 }

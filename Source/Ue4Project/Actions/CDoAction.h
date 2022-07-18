@@ -24,10 +24,12 @@ public:
 public:
 	// 액션을 수행(액션에 해당하는 몽타주 플레이)
 	virtual void DoAction() {};
+	// Index로 액션을 수행
+	virtual void DoAction(const int32& InIndex) {};
 	// 몽타주에 의해 시작
 	virtual void Begin_DoAction() {};
-	// 몽타주에 의해 종료
-	virtual void End_DoAction() {};
+	// DoSkill, DoAction 모두 이 노티파이로 종료
+	virtual void End_Action() {};
 
 	virtual void DoSkill(const FString& InSkillName) {};
 	virtual void DoSkill(const int32& InIndex) {};
@@ -68,6 +70,13 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 		class UCStatusComponent* Status;
 
+public:
+	virtual void DoAction_RandomIndex() {}; // DoAction 사이즈내로 Random한 Index 생성
+	virtual void DoSkill_RandomIndex() {}; // DoSkill 사이즈내로 Random한 Index 생성
+
+public:
+	FORCEINLINE int32 GetIndex() { return Index; }
+
 protected:
 	const bool* bEquipped;
 	bool bSkill; // 스킬 상태중인지
@@ -75,4 +84,6 @@ protected:
 	TArray<FDoActionData> Datas;
 	TArray<FDoSkillData> SkillDatas;
 	float OffsetRatio = 1.0f; // 공격속도 올리기 위해
+
+	int32 Index; // 현재 몇번째 콤보중인지
 };

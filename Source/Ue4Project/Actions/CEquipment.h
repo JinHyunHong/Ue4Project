@@ -15,7 +15,8 @@ class UE4PROJECT_API ACEquipment : public AActor
 
 public:
 	// CActionData로 부터 값을 세팅함
-	FORCEINLINE void SetData(FEquipmentData InData) { Data = InData; }
+	FORCEINLINE void SetEquipData(FEquipmentData InData) { EquipData = InData; }
+	FORCEINLINE void SetUnequipData(FEquipmentData InData) { UnequipData = InData; }
 	FORCEINLINE const bool* GetEquipped() { return &bEquipped; }
 
 public:
@@ -41,6 +42,14 @@ public:
 		void Unequip();
 	void Unequip_Implementation();
 
+	UFUNCTION(BlueprintNativeEvent)
+		void Begin_Unequip();
+	void Begin_Unequip_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+		void End_Unequip();
+	void End_Unequip_Implementation();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -63,5 +72,6 @@ protected:
 
 private:
 	bool bEquipped;
-	FEquipmentData Data;
+	FEquipmentData EquipData;
+	FEquipmentData UnequipData;
 };

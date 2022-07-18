@@ -29,7 +29,7 @@ void UCInventoryComponent::BeginPlay()
 
 	FTransform transform = GetOwner()->GetActorTransform();
 	transform.SetLocation(FVector(transform.GetLocation().X, transform.GetLocation().Y, 5069518));
-	transform.SetRotation(FQuat(0, 0, -180, 0));
+	transform.SetRotation(FQuat(0.0f, 0.0f,-180.0f, 0.0f));
 	EquipState = GetWorld()->SpawnActorDeferred<ACEquipCharacter>(EquipStateClass, transform);
 	UGameplayStatics::FinishSpawningActor(EquipState, transform);
 
@@ -83,17 +83,32 @@ void UCInventoryComponent::OnEquipState(const EEquipmentType& InEquipType, const
 {
 	CheckNull(EquipState);
 	CheckNull(InItemData.Mesh);
-	USkeletalMeshComponent* mesh = EquipState->GetEquipMesh(InEquipType);
-	CheckNull(mesh);
-	mesh->SetSkeletalMesh(InItemData.Mesh);
+	USkeletalMeshComponent* component = EquipState->GetEquipMesh(InEquipType);
+	CheckNull(component);
+	component->SetSkeletalMesh(InItemData.Mesh);
+
+	// 왼손에도 무기 해제 (Weapon + 1 -> LeftWeapon)
+	component = EquipState->GetEquipMesh((EEquipmentType)((int32)EEquipmentType::Weapon + 1));
+	component->SetSkeletalMesh(NULL);
+
+	if (InItemData.bTwoHand)
+	{
+		// 왼손에도 무기 장착 (Weapon + 1 -> LeftWeapon)
+		component = EquipState->GetEquipMesh((EEquipmentType)((int32)InEquipType + 1));
+		component->SetSkeletalMesh(InItemData.Mesh);
+	}
 }
 
 void UCInventoryComponent::OnUnequipState(const EEquipmentType& InEquipType)
 {
 	CheckNull(EquipState);
-	USkeletalMeshComponent* mesh = EquipState->GetEquipMesh(InEquipType);
-	CheckNull(mesh);
-	mesh->SetSkeletalMesh(NULL);
+	USkeletalMeshComponent* component = EquipState->GetEquipMesh(InEquipType);
+	CheckNull(component);
+	component->SetSkeletalMesh(NULL);
+
+	// 왼손에도 무기 해제 (Weapon + 1 -> LeftWeapon)
+	component = EquipState->GetEquipMesh((EEquipmentType)((int32)EEquipmentType::Weapon + 1));
+	component->SetSkeletalMesh(NULL);
 }
 
 void UCInventoryComponent::SetViewList(const EViewListType& InType)

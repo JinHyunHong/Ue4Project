@@ -22,6 +22,8 @@ void UCUserWidget_EquipSlot::NativeOnInitialized()
 {
 	ToolTip = CreateWidget<UCUserWidget_ToolTip, APlayerController>(GetOwningPlayer(), ToolTipClass);
 	ToolTip->SetVisibility(ESlateVisibility::Collapsed);
+	// ZOrder를 높여서 최상위로 ToolTip이 보이도록 함
+	ToolTip->AddToViewport(10);
 
 	Super::NativeOnInitialized();
 }
@@ -29,15 +31,13 @@ void UCUserWidget_EquipSlot::NativeOnInitialized()
 FReply UCUserWidget_EquipSlot::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	CheckEmptyResult(ItemName, FReply::Unhandled());
-	CheckEmptyResult(ItemData.Desc, FReply::Unhandled());
+	CheckNullResult(ItemData.Mesh, FReply::Unhandled());
 	CheckNullResult(ToolTip, FReply::Unhandled());
 
 	Super::NativeOnMouseMove(InGeometry, InMouseEvent);
 
 	if (bEnter)
 	{
-		if (ToolTip->IsInViewport() == false) ToolTip->AddToViewport(0);
-
 		FVector2D mousePos = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetWorld());
 		float scale = UWidgetLayoutLibrary::GetViewportScale(this->GetWorld());
 		mousePos *= scale;
@@ -55,7 +55,7 @@ void UCUserWidget_EquipSlot::NativeOnMouseEnter(const FGeometry& InGeometry, con
 	bEnter = true;
 
 	CheckEmpty(ItemName);
-	CheckEmpty(ItemData.Desc);
+	CheckNull(ItemData.Mesh);
 
 	CheckNull(ToolTip);
 	CheckTrue(ToolTip->GetVisibility() == ESlateVisibility::HitTestInvisible);
@@ -69,7 +69,7 @@ void UCUserWidget_EquipSlot::NativeOnMouseLeave(const FPointerEvent& InMouseEven
 	bEnter = false;
 
 	CheckEmpty(ItemName);
-	CheckEmpty(ItemData.Desc);
+	CheckNull(ItemData.Mesh);
 
 	CheckNull(ToolTip);
 	CheckTrue(ToolTip->GetVisibility() == ESlateVisibility::Collapsed);
@@ -79,7 +79,7 @@ void UCUserWidget_EquipSlot::NativeOnMouseLeave(const FPointerEvent& InMouseEven
 FReply UCUserWidget_EquipSlot::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	CheckEmptyResult(ItemName, FReply::Unhandled());
-	CheckNullResult(ItemData.SumNail, FReply::Unhandled());
+	CheckNullResult(ItemData.Mesh, FReply::Unhandled());
 	CheckNullResult(ToolTip, FReply::Unhandled());
 
 	CheckFalseResult(InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton), FReply::Unhandled());
@@ -123,7 +123,7 @@ void UCUserWidget_EquipSlot::DeleteItem()
 
 void UCUserWidget_EquipSlot::UnEquipItem()
 {
-	CheckEmpty(ItemName);
+	CheckNull(ItemData.Mesh);
 
 	ACEquipCharacter* owner = Cast<ACEquipCharacter>(GetOwningPlayer()->GetPawn());
 	CheckNull(owner);

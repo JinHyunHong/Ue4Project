@@ -40,6 +40,24 @@ void ACDoAction_Melee::DoAction()
 	data.bCanMove ? Status->SetMove() : Status->SetStop();		
 }
 
+void ACDoAction_Melee::DoAction(const int32& InIndex)
+{
+	Super::DoAction();
+
+	CheckFalse(Datas.Num() > 0);
+	CheckNull(Datas[InIndex].AnimMontage);
+	CheckFalse(State->IsIdleMode());
+	
+	State->SetActionMode();
+
+	const FDoActionData& data = Datas[InIndex];
+
+	OwnerCharacter->PlayAnimMontage(data.AnimMontage, data.PlayRatio * OffsetRatio, data.StartSection);
+
+	data.bCanMove ? Status->SetMove() : Status->SetStop();
+}
+
+
 void ACDoAction_Melee::Begin_DoAction()
 {
 	Super::Begin_DoAction();
@@ -56,15 +74,18 @@ void ACDoAction_Melee::Begin_DoAction()
 
 	Index++;
 
+	CheckFalse(Datas.Num() > Index);
+
 	const FDoActionData& data = Datas[Index];
+
 	OwnerCharacter->PlayAnimMontage(data.AnimMontage, data.PlayRatio * OffsetRatio, data.StartSection);
 
 	data.bCanMove ? Status->SetMove() : Status->SetStop();
 }
 
-void ACDoAction_Melee::End_DoAction()
+void ACDoAction_Melee::End_Action()
 {
-	Super::End_DoAction();
+	Super::End_Action();
 
 	// 현재 몽타주 중단 시킴
 	OwnerCharacter->StopAnimMontage();
@@ -80,13 +101,18 @@ void ACDoAction_Melee::End_DoAction()
 	bSkill = false;
 
 	// 기존 Effect 제거
-	Niagara ? Niagara->DestroyComponent() : Niagara = NULL;
+	if (!!Niagara)
+	{
+		Niagara->DestroyComponent();
+		Niagara = NULL;
+	}
 }
 
 void ACDoAction_Melee::DoSkill(const FString& InSkillName)
 {
 	Super::DoSkill(InSkillName);
 
+	CheckFalse(SkillDatas.Num() > 0);
 	CheckFalse(State->IsIdleMode());
 
 	for (int32 i = 0; i < SkillDatas.Num(); i++)
@@ -113,6 +139,7 @@ void ACDoAction_Melee::DoSkill(const int32& InIndex)
 {
 	Super::DoSkill(InIndex);
 
+	CheckFalse(SkillDatas.Num() > 0);
 	CheckNull(SkillDatas[InIndex].AnimMontage);
 	CheckFalse(State->IsIdleMode());
 
@@ -139,7 +166,7 @@ void ACDoAction_Melee::OnAttachmentBeginOverlap(class ACharacter* InAttacker, cl
 
 	for (const ACharacter* other : HittedCharacters)
 	{
-		if (InOtherCharacter == other)
+		if (InOtherCharacter == other) 
 			return;
 	}
 	HittedCharacters.Add(InOtherCharacter);
@@ -159,9 +186,6 @@ void ACDoAction_Melee::OnAttachmentBeginOverlap(class ACharacter* InAttacker, cl
 	UNiagaraSystem* niagara = data.NiagaraEffect;
 	if (!!niagara)
 	{
-		// 기존 Effect 제거
-		Niagara ? Niagara->DestroyComponent() : Niagara = NULL;
-
 		FTransform transform = data.NiagaraTransform;
 		transform.AddToTranslation(owner->GetActorLocation());
 		transform.SetRotation(owner->GetActorRotation().Quaternion());
@@ -206,6 +230,11 @@ void ACDoAction_Melee::OnAttachmentBeginOverlap(class ACharacter* InAttacker, cl
 
 void ACDoAction_Melee::OnAttachmentEndOverlap(class ACharacter* InAttacker, class AActor* InAttackCauser, class ACharacter* InOtherCharacter)
 {
+	if (!!Niagara)
+	{
+		Niagara->DestroyComponent();
+		Niagara = NULL;
+	}
 }
 
 void ACDoAction_Melee::OnAttahmentCollision()
@@ -220,4 +249,22 @@ void ACDoAction_Melee::OffAttahmentCollision()
 void ACDoAction_Melee::RestoreDilation()
 {
 	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
+}
+
+void ACDoAction_Melee::DoAction_RandomIndex()
+{
+	Super::DoAction_RandomIndex();
+
+	CheckFalse(Datas.Num() > 0);
+
+	Index = UKismetMathLibrary::RandomIntegerInRange(0, Datas.Num() - 1);
+}
+
+void ACDoAction_Melee::DoSkill_RandomIndex()
+{
+	Super::DoSkill_RandomIndex();
+
+	CheckFalse(SkillDatas.Num() > 0);
+
+	Index = UKismetMathLibrary::RandomIntegerInRange(0, SkillDatas.Num() - 1);
 }

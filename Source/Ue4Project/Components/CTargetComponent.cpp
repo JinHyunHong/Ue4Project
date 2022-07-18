@@ -1,6 +1,8 @@
 #include "CTargetComponent.h"
 #include "Global.h"
+#include "Characters/CEnemy.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CStateComponent.h"
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
@@ -31,6 +33,7 @@ void UCTargetComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 
 	// 타겟이 사망했는지를 체크해야 하니까
 	UCStateComponent* state = CHelpers::GetComponent<UCStateComponent>(Target);
+	CheckNull(state);
 
 	// 타겟팅이 해제될 수 있는 조건 2개
 	// 1. 일정거리를 벗어났을때
@@ -51,7 +54,6 @@ void UCTargetComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 		return;
 	}
 
-
 	// 즉, 바라보는 방향의 회전값으로 세팅되도록 만듬(left, right target 버그 해결)
 
 	FVector start = OwnerCharacter->GetActorLocation();
@@ -66,6 +68,9 @@ void UCTargetComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 
 	// SetControlRotation()은 private이어서 Contoller를 통해 가져와야함
 	OwnerCharacter->GetController()->SetControlRotation(rotator);
+
+	// falling 상황이라면 Cursor는 꺼짐
+	Target->GetMovementComponent()->IsFalling() ? DeactiveCursor() : ActiveCursor();
 }
 
 
@@ -90,12 +95,17 @@ void UCTargetComponent::StartTargeting()
 
 void UCTargetComponent::EndTargeting()
 {
-	// EndTargeting에서는 초기화 해줌
-	Target = NULL;
 	TraceTargets.Empty();
+	CheckNull(Target);
 
 	if (!!Attached)
+	{
 		Attached->DestroyComponent();
+		Attached = NULL;
+	}
+
+	// EndTargeting에서는 초기화 해줌
+	Target = NULL;
 }
 
 void UCTargetComponent::SetTraceTargets()
@@ -115,11 +125,11 @@ void UCTargetComponent::SetTraceTargets()
 		if (result.GetActor()->GetClass() == OwnerCharacter->GetClass())
 			continue;
 
-		ACharacter* character = Cast<ACharacter>(result.GetActor());
+		ACEnemy* enemy = Cast<ACEnemy>(result.GetActor());
 
 		// casting 되었다면 AddUnique()로 중복 안되게 넣어줌
-		if (!!character)
-			TraceTargets.AddUnique(character);
+		if (!!enemy)
+			TraceTargets.AddUnique(enemy);
 	}
 }
 
@@ -227,7 +237,10 @@ void UCTargetComponent::ChangeCursor(class ACharacter* InTarget)
 	{
 		// 이미 컴포넌트가 존재한다면 제거해라
 		if (!!Attached)
+		{
 			Attached->DestroyComponent();
+			Attached = NULL;
+		}
 
 		// 소켓에다 파티클을 붙임
 		FTransform transform;
@@ -241,4 +254,16 @@ void UCTargetComponent::ChangeCursor(class ACharacter* InTarget)
 
 	// Null이라면 EndTargeting으로 간다.
 	EndTargeting();
+}
+
+void UCTargetComponent::ActiveCursor()
+{
+	CheckNull(Attached);
+	Attached->Activate();
+}
+
+void UCTargetComponent::DeactiveCursor()
+{
+	CheckNull(Attached);
+	Attached->Deactivate();
 }

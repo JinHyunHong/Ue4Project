@@ -15,7 +15,8 @@ ACItem::ACItem()
 	CHelpers::CreateComponent<UWidgetComponent>(this, &Widget, "Widget", Scene);
 
 	CHelpers::GetClass<UCUserWidget_PickMessage>(&PickMessageClass, "WidgetBlueprint'/Game/Widgets/WB_PickMessage.WB_PickMessage_C'");
-	
+	CHelpers::GetAsset<UDataTable>(&DataTable, "DataTable'/Game/DataTables/Equipment/DT_Equipment.DT_Equipment'");
+
 	Widget->SetWidgetClass(PickMessageClass);
 	Widget->SetDrawSize(FVector2D(50, 200));
 	Widget->SetWidgetSpace(EWidgetSpace::Screen);
@@ -32,30 +33,15 @@ void ACItem::BeginPlay()
 	CheckNull(widget);
 
 	widget->SetVisibility(ESlateVisibility::Hidden);
-
-	FindItemData(ItemData);
+	
+	SetItem();
 
 	Super::BeginPlay();
 }
 
 void ACItem::OnConstruction(const FTransform& Transform)
 {
-	Mesh->SetStaticMesh(NULL);
-
-	UStaticMesh* mesh = NULL;
-
-	FItem itemData;
-	CheckFalse(FindItemData(itemData));
-
-	mesh = itemData.Item;
-
-	FVector translation = itemData.Translation;
-	FRotator rotation = itemData.Rotation;
-	
-	CheckNull(mesh);
-	Mesh->SetStaticMesh(mesh);
-	Mesh->SetRelativeLocation(translation);
-	Mesh->SetRelativeRotation(rotation);
+	SetItem();
 
 	Super::OnConstruction(Transform);
 }
@@ -99,108 +85,78 @@ void ACItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 	player->SetInteractItem(NULL);
 }
 
-bool ACItem::FindItemData(FItem& OutItemData)
+void ACItem::SetItem()
 {
+	Mesh->SetStaticMesh(NULL);
+
+	UStaticMesh* mesh = NULL;
+
+	FindItemData();
+
+	mesh = ItemData.Item;
+	CheckNull(mesh);
+
+	FVector translation = ItemData.Translation;
+	FRotator rotation = ItemData.Rotation;
+
+	Mesh->SetStaticMesh(mesh);
+	Mesh->SetRelativeLocation(translation);
+	Mesh->SetRelativeRotation(rotation);
+}
+
+void ACItem::FindItemData()
+{
+	CheckNull(DataTable);
+
+	// 랜덤 아이템의 경우
+	if (bRandom)
+	{
+		CharacterType = (ECharacter)UKismetMathLibrary::RandomIntegerInRange(0, (int32)ECharacter::Max - 1);
+		EquipType = (EEquipmentType)UKismetMathLibrary::RandomIntegerInRange((int32)EEquipmentType::Chest, (int32)EEquipmentType::Max - 1);
+
+		// TODO : Item Type Add (None -> Item)
+		// EquipType = (EEquipmentType)UKismetMathLibrary::RandomIntegerInRange((int32)EEquipmentType::None, (int32)EEquipmentType::Max);
+	}
+
 	FName characterType = FName(CHelpers::GetEnumToString(CharacterType, "ECharacter"));
-	FName equipName = FName(CHelpers::GetEnumToString(EquipType, "EquipmentType"));
+	FName equipName = FName(CHelpers::GetEnumToString(EquipType, "EEquipmentType"));
 	FName itemName = FName(ItemName);
 
 	FEquipmentDataTables* equipDatas = DataTable->FindRow<FEquipmentDataTables>(characterType, FString(""));
-	CheckNullResult(equipDatas, false);
+	CheckNull(equipDatas);
 
 	UDataTable* equipData = NULL;
 
 	switch (EquipType)
 	{
-		case EEquipmentType::Chest:
-		{
-			equipData = equipDatas->ChestTable;
-			FEquipment_Chest* chest = equipData->FindRow<FEquipment_Chest>(itemName, FString(""));
-			CheckNullResult(chest, false);
-			OutItemData = chest->Item;
-			return true;
-		}
-		case EEquipmentType::Pants:
-		{
-			equipData = equipDatas->PatnsTable;
-			FEquipment_Pants* pants = equipData->FindRow<FEquipment_Pants>(itemName, FString(""));
-			CheckNullResult(pants, false);
-			OutItemData = pants->Item;
-			return true;
-		}
-		case EEquipmentType::Boots:
-		{
-			equipData = equipDatas->BootsTable;
-			FEquipment_Boots* boots = equipData->FindRow<FEquipment_Boots>(itemName, FString(""));
-			CheckNullResult(boots, false);
-			OutItemData = boots->Item;
-			return true;
-		}
-		case EEquipmentType::Helmet:
-		{
-			equipData = equipDatas->HelmetTable;
-			FEquipment_Helmet* helmet = equipData->FindRow<FEquipment_Helmet>(itemName, FString(""));
-			CheckNullResult(helmet, false);
-			OutItemData = helmet->Item;
-			return true;
-		}
-		case EEquipmentType::LeftBracer:
-		{
-			equipData = equipDatas->BracersTable;
-			FBracersPair* bracers = equipData->FindRow<FBracersPair>(itemName, FString(""));
-			CheckNullResult(bracers, false);
-			OutItemData = bracers->Left.Item;
-			return true;
-		}
-		case EEquipmentType::RightBracer:
-		{
-			equipData = equipDatas->BracersTable;
-			FBracersPair* bracers = equipData->FindRow<FBracersPair>(itemName, FString(""));
-			CheckNullResult(bracers, false);
-			OutItemData = bracers->Right.Item;
-			return true;
-		}
-		case EEquipmentType::Cloak:
-		{
-			equipData = equipDatas->CloakTable;
-			FEquipment_Cloak* cloak = equipData->FindRow<FEquipment_Cloak>(itemName, FString(""));
-			CheckNullResult(cloak, false);
-			OutItemData = cloak->Item;
-			return true;
-		}
-		case EEquipmentType::Gloves:
-		{
-			equipData = equipDatas->GlovesTable;
-			FEquipment_Gloves* gloves = equipData->FindRow<FEquipment_Gloves>(itemName, FString(""));
-			CheckNullResult(gloves, false);
-			OutItemData = gloves->Item;
-			return true;
-		}
-		case EEquipmentType::Robes:
-		{
-			equipData = equipDatas->RobesTable;
-			FEquipment_Robe* robe = equipData->FindRow<FEquipment_Robe>(itemName, FString(""));
-			CheckNullResult(robe, false);
-			OutItemData = robe->Item;
-			return true;
-		}
-		case EEquipmentType::Shoulders:
-		{
-			equipData = equipDatas->ShouldersTable;
-			FEquipment_Shoulders* shoulders = equipData->FindRow<FEquipment_Shoulders>(itemName, FString(""));
-			CheckNullResult(shoulders, false);
-			OutItemData = shoulders->Item;
-			return true;
-		}
-		case EEquipmentType::Weapon:
-		{
-			equipData = equipDatas->WeaponTable;
-			FEquipment_Weapon* weapon = equipData->FindRow<FEquipment_Weapon>(itemName, FString(""));
-			CheckNullResult(weapon, false);
-			OutItemData = weapon->Item;
-			return true;
-		}
+		case EEquipmentType::Chest: equipData = equipDatas->ChestTable; break;
+		case EEquipmentType::Pants: equipData = equipDatas->PatnsTable; break;
+		case EEquipmentType::Boots: equipData = equipDatas->BootsTable; break;
+		case EEquipmentType::Helmet: equipData = equipDatas->HelmetTable; break;
+		case EEquipmentType::LeftBracer: equipData = equipDatas->LeftBracerTable; break;
+		case EEquipmentType::RightBracer: equipData = equipDatas->RightBracerTable; break;
+		case EEquipmentType::Cloak:	equipData = equipDatas->CloakTable; break;
+		case EEquipmentType::Gloves: equipData = equipDatas->GlovesTable; break;
+		case EEquipmentType::Robes: equipData = equipDatas->RobesTable; break;
+		case EEquipmentType::Shoulders: equipData = equipDatas->ShouldersTable; break;
+		case EEquipmentType::Weapon: equipData = equipDatas->WeaponTable; break;
 	}
-	
-	return false;
+
+	CheckNull(equipData);
+
+	if (bRandom)
+	{
+		TArray<FName> rowNames = equipData->GetRowNames();
+		CheckFalse(rowNames.Num() > 0);
+		
+		itemName = rowNames[UKismetMathLibrary::RandomIntegerInRange(0, rowNames.Num() - 1)];
+		ItemName = itemName.ToString();
+
+		bRandom = false;
+	}
+
+	FItem* itemData = equipData->FindRow<FItem>(itemName, "");
+	CheckNull(itemData);
+
+	ItemData = *itemData;
 }

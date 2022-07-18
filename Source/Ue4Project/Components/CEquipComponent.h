@@ -6,7 +6,8 @@
 #include "Characters/CEquipCharacter.h"
 #include "CEquipComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FEquipChanged, const EEquipmentType&, InEquipType, const FString&, InItemName, const FItem&, InItemData);
+// FItem&는 포인터에 대한 역참조(Address)를 넘김
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FEquipChanged, const EEquipmentType&, InEquipType, const FString&, ItemName, const FItem&, ItemData);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UE4PROJECT_API UCEquipComponent : public UActorComponent
@@ -35,7 +36,7 @@ public:
 		void Equip(const EEquipmentType& InEquipType, const FString& InItemName);
 	
 	UFUNCTION(BlueprintCallable)
-		bool Unequip(const EEquipmentType& InEquipType);
+		void Unequip(const EEquipmentType& InEquipType);
 
 public:
 	void Equip(const EEquipmentType& InEquipType, const FString& InItemName, FItem& InItemData);

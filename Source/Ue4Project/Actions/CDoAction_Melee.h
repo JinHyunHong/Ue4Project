@@ -15,8 +15,9 @@ public:
 
 public:
 	virtual void DoAction() override;
+	virtual void DoAction(const int32& InIndex) override;
 	virtual void Begin_DoAction() override;
-	virtual void End_DoAction() override;
+	virtual void End_Action() override;
 
 	virtual void DoSkill(const FString& InSkillName) override;
 	virtual void DoSkill(const int32& InIndex) override;
@@ -28,6 +29,9 @@ public:
 	virtual void OnAttahmentCollision() override;
 	virtual void OffAttahmentCollision() override;
 
+	virtual void DoAction_RandomIndex() override;
+	virtual void DoSkill_RandomIndex() override;
+
 private:
 	UFUNCTION()
 		void RestoreDilation();
@@ -36,8 +40,6 @@ private:
 	bool bExist; // 다음 콤보가 존재하는지
 	bool bEnable; // 다음 콤보가 허용되었는지
 	bool bLast; // 콤보의 마지막인지
-
-	int32 Index; // 현재 몇번째 콤보중인지
 
 	TArray<ACharacter*> HittedCharacters;
 	class UNiagaraComponent* Niagara;

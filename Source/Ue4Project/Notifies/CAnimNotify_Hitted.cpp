@@ -2,6 +2,7 @@
 #include "Global.h"
 #include "GameFramework/Character.h"
 #include "Components/CStateComponent.h"
+#include "Components/CStatusComponent.h"
 
 FString UCAnimNotify_Hitted::GetNotifyName_Implementation() const
 {
@@ -20,7 +21,12 @@ void UCAnimNotify_Hitted::Notify(USkeletalMeshComponent* MeshComp, UAnimSequence
 	UCStateComponent* state = CHelpers::GetComponent<UCStateComponent>(character);
 	CheckNull(state);
 
-	// IdleMode 상태로 돌려줌
+	UCStatusComponent* status = CHelpers::GetComponent<UCStatusComponent>(character);
+	CheckNull(status);
+
+	// IdleMode 상태 & 움직일 수 있는 상태
 	state->SetIdleMode();
+	status->SetMove();
+	status->SetSpeed(ECharacterSpeed::Walk);
 }
 

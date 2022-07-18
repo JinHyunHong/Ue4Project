@@ -42,7 +42,9 @@ public:
 	void PlayBackStep();
 	void PlayHitted();
 	void PlayDead();
-	void PlayPickUp();
+	void PlayMantle1M();
+	void PlayMantle15M();
+	void PlayMantle2M();
 
 protected:
 	virtual void BeginPlay() override;
@@ -52,5 +54,4 @@ private:
 
 private:
 	FMontageData* Datas[(int32)EStateType::Max];
-		
 };

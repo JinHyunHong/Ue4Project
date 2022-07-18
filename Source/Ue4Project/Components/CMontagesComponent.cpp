@@ -49,9 +49,19 @@ void UCMontagesComponent::PlayDead()
 	PlayAnimMontage(EStateType::Dead);
 }
 
-void UCMontagesComponent::PlayPickUp()
+void UCMontagesComponent::PlayMantle1M()
 {
-	PlayAnimMontage(EStateType::PickUp);
+	PlayAnimMontage(EStateType::Mantle1M);
+}
+
+void UCMontagesComponent::PlayMantle15M()
+{
+	PlayAnimMontage(EStateType::Mantle15M);
+}
+
+void UCMontagesComponent::PlayMantle2M()
+{
+	PlayAnimMontage(EStateType::Mantle2M);
 }
 
 void UCMontagesComponent::PlayAnimMontage(EStateType InState)

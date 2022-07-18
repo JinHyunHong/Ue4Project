@@ -7,7 +7,6 @@
 ACDoAction::ACDoAction()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 void ACDoAction::BeginPlay()
@@ -30,6 +29,3 @@ void ACDoAction::RestoreRatio()
 {
 	OffsetRatio = 1.0f;
 }
-
-
-

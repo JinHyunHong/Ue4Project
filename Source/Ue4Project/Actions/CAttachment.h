@@ -21,6 +21,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly)
 		class USkeletalMeshComponent* Mesh;
 
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+		TArray<class UShapeComponent*> ActionComponents; // 일반 공격의 Collision
+
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+		TArray<class UShapeComponent*> SkillComponents; // 스킬의 Collision
+
 protected:
 	UFUNCTION(BlueprintCallable)
 		void AttachTo(FName InSoketName);
@@ -34,6 +40,9 @@ protected:
 	
 public:	
 	ACAttachment();
+
+	void OnActionCollision();
+	void OnSkillCollision(const int32& InIndex); // 특정 Index의 Collision을 켜줌
 
 	// 노티파이때 충돌체가 켜지고, 꺼진다.
 	void OnCollision();
@@ -61,7 +70,6 @@ public:
 	UPROPERTY(BlueprintAssignable)
 		FAttachmentCollision OffAttachmentCollision;
 
-
 protected:
 	virtual void BeginPlay() override;
 
@@ -72,10 +80,16 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnUnequip();
 
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnAddActionCollision();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnAddSkillCollision();
+
 protected:
 	UPROPERTY(BlueprintReadOnly)
 		class ACharacter* OwnerCharacter;
 
 private:
-	TArray<class UShapeComponent*> ShapeComponents;
+	TArray<class UShapeComponent*> ShapeComponents; // 전체 Collision
 };
