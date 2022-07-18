@@ -10,6 +10,7 @@
 #include "Components/CMontagesComponent.h"
 #include "Components/CTargetComponent.h"
 #include "Components/CStatusComponent.h"
+#include "Components/CBehaviorComponent.h"
 #include "Materials/MaterialInstanceConstant.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Components/WidgetComponent.h"
@@ -178,6 +179,18 @@ void ACEnemy::Hitted()
 	// 인자로는 호출할 클래스를 넘긴다.
 	Execute_ChangeColor(this, HittedColor);
 
+
+	UCBehaviorComponent* behavior = CHelpers::GetComponent<UCBehaviorComponent>(GetController());
+	CheckNull(behavior);
+
+	// AngryMode(폭주상태)는 AngryColor로 바꿔줌
+	if (behavior->IsAngryMode())
+	{
+		UKismetSystemLibrary::K2_SetTimer(this, "RestoreAngryColor", 0.3f, false);
+
+		return;
+	}
+	
 	UKismetSystemLibrary::K2_SetTimer(this, "RestoreColor", 0.3f, false);
 }
 
@@ -234,4 +247,14 @@ void ACEnemy::FinishDead()
 
 		UGameplayStatics::FinishSpawningActor(item, transform);
 	}
+}
+
+void ACEnemy::RestoreColor()
+{
+	Execute_ChangeColor(this, FLinearColor(0.0f, 0.0f, 0.0f, 1.0f));
+}
+
+void ACEnemy::RestoreAngryColor()
+{
+	Execute_ChangeColor(this, AngryColor);
 }

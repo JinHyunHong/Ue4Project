@@ -65,9 +65,12 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 		void SetBodyMaterial(); // 몬스터는 제각각 Material을 가지고 있음
 
-	// 색 복원하기(타이머 델리게이션으로)
-	UFUNCTION(BlueprintImplementableEvent)
-		void RestoreColor();
+	UFUNCTION()
+		void RestoreColor(); // 색 복원하기(타이머 델리게이션으로)
+
+	UFUNCTION()
+		void RestoreAngryColor(); // 색 복원하기(타이머 델리게이션으로)
+
 
 public:
 	virtual void Begin_Dead() override;

@@ -165,7 +165,6 @@ void UCActionComponent::SetMode(EActionType InType)
 
 	if (InType == Type || InType == EActionType::Unarmed)
 	{
-		CLog::Print("Unquip");
 		ACEquipment* equipment = Datas[(int32)Type]->GetEquipment();
 		CheckNull(equipment);
 		equipment->Unequip();
@@ -177,7 +176,6 @@ void UCActionComponent::SetMode(EActionType InType)
 
 	else if (IsUnarmedMode() == false)
 	{
-		CLog::Print("Unequip");
 		ACEquipment* equipment = Datas[(int32)Type]->GetEquipment();
 		CheckNull(equipment);
 
@@ -197,7 +195,6 @@ void UCActionComponent::SetMode(EActionType InType)
 
 	if (!!Datas[(int32)InType])
 	{
-		CLog::Print("Equip");
 		ACEquipment* equipment = Datas[(int32)InType]->GetEquipment();
 		CheckNull(equipment);
 
@@ -247,8 +244,6 @@ void UCActionComponent::DoAction_Random()
 
 	ACDoAction* action = Datas[(int32)Type]->GetDoAction();
 	CheckFalse(action->IsValidLowLevel());
-
-	CLog::Print(action->GetActorLabel());
 
 	if (!!action)
 	{

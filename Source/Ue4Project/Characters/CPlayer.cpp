@@ -501,7 +501,6 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 
 void ACPlayer::Hitted()
 {
-	CLog::Print("Hitted");
 	Status->SubHealth(DamageValue);
 	DamageValue = 0.0f;
 
