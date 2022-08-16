@@ -93,4 +93,34 @@ public:
 
 		return T();
 	}
+
+};
+
+class UE4PROJECT_API CMath
+{
+public:
+	static void GetBezierCurve(FVector InP0, FVector InP1, FVector InP2, FVector InP3, float InT, FVector& OutResult)
+	{
+		// 1. 일반적인 계산
+
+		// 사용하게될 수식 미리 연산
+		// float u = 1.0f - InT;
+		// float t2 = InT * InT;
+		// float u2 = u * u;
+		// float u3 = u2 * u;
+		// float t3 = t2 * InT;
+
+		// 4개의 점이 주어졌을때 p0와 p3를 p1과 p2를 향하여 보간
+		// OutResult = u3 * InP0 + (3.0f * InT * u2 ) * InP1 + (3.0f * t2 * u) * InP2 + t3 * InP3;
+
+		// 2. Lerp를 활용(InT 값만큼 연산하여 최종적인 점의 위치를 구함) 
+		FVector a = FMath::Lerp(InP0, InP1, InT);
+		FVector b = FMath::Lerp(InP1, InP2, InT);
+		FVector c = FMath::Lerp(InP2, InP3, InT);
+
+		FVector d = FMath::Lerp(a, b, InT);
+		FVector e = FMath::Lerp(b, c, InT);
+
+		OutResult = FMath::Lerp(d, e, InT); // 최종 값(f)
+	}
 };
